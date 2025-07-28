@@ -1,0 +1,93 @@
+# from pydantic import BaseModel, EmailStr
+# from enum import Enum
+
+# class UserRole(str, Enum):
+#     admin = "admin"
+#     consultant = "consultant"
+
+# class UserCreate(BaseModel):
+#     name: str
+#     email: EmailStr
+#     password: str
+#     role: UserRole
+
+# class UserLogin(BaseModel):
+#     email: EmailStr
+#     password: str
+
+# class UserResponse(BaseModel):
+#     id: int
+#     name: str
+#     email: EmailStr
+#     role: UserRole
+
+#     class Config:
+#         orm_mode = True
+
+from pydantic import BaseModel, EmailStr, Field
+from enum import Enum
+from typing import Optional
+from datetime import datetime
+
+class UserRole(str, Enum):
+    admin = "admin"
+    consultant = "consultant"
+
+class UserCreate(BaseModel):
+    name: str = Field(..., min_length=2, max_length=50)
+    email: EmailStr
+    password: str = Field(..., min_length=8)
+    role: UserRole = UserRole.consultant
+    department: Optional[str] = Field(None, max_length=50)
+    skills: Optional[list[str]] = []
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user_id: int
+    role: UserRole
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+    role: Optional[UserRole] = None
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+    role: UserRole
+    department: Optional[str]
+    skills: Optional[list[str]]
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
+
+class AdminResponse(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+    role: UserRole
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
+
+class ConsultantResponse(UserResponse):  # Inherits from existing UserResponse
+    resume_status: str
+    training_status: str
+    attendance_summary: dict  # Custom field
+
+    class Config:
+        orm_mode = True
+        

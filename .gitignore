@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+.env
+.venv/
+venv/
+
+# Node/React
+node_modules/
+dist/
+.vscode/
+.DS_Store
+
+# Database
+*.db
+*.sqlite
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Build files
+*.egg-info/
+build/
