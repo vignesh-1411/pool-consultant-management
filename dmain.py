@@ -12,8 +12,28 @@ from dotenv import load_dotenv
 
 app = FastAPI()
 
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In development, "*" is okay. For production, restrict to ["http://localhost:5173"] or your domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+allow_origins=["http://localhost:5173"]
+
+
 # Load environment variables
 load_dotenv()
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+print("EMAIL_PASS from .env:", os.getenv("EMAIL_PASS"))  # ✅ Add this
+
 
 
 from app.routers.user_router import router as auth_router
@@ -238,7 +258,7 @@ from pydantic import EmailStr
 # Add to your existing config
 conf = ConnectionConfig(
     MAIL_USERNAME=os.getenv("EMAIL_USER"),
-    MAIL_PASSWORD=os.getenv("EMAIL_APP_PASSWORD"),  # Use app password!
+    MAIL_PASSWORD=os.getenv("EMAIL_PASS"),  # Use app password!
     MAIL_FROM=os.getenv("EMAIL_USER"),
     MAIL_PORT=int(os.getenv("EMAIL_PORT")),
     MAIL_SERVER=os.getenv("EMAIL_HOST"),
