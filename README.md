@@ -1,10 +1,10 @@
-# 👩‍💼 Consultant Training and Assessment Platform
+#  Consultant Training and Assessment Platform
 
 This project is a full-stack web application designed to manage consultants' registration, resume processing, attendance tracking, assessments, and performance monitoring. Admins can oversee consultants’ progress, while consultants can interact with training and evaluation features.
 
 ---
 
-## 🚀 Features
+##  Features
 
 ### Consultant Side:
 - Register/Login
