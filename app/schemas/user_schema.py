@@ -83,10 +83,16 @@ class AdminResponse(BaseModel):
             datetime: lambda v: v.isoformat()
         }
 
-class ConsultantResponse(UserResponse):  # Inherits from existing UserResponse
+class AttendanceSummary(BaseModel):
+    present_days: int
+    total_days: int
+    attendance_rate: str
+
+class ConsultantResponse(UserResponse):
     resume_status: str
     training_status: str
-    attendance_summary: dict  # Custom field
+    attendance_summary: AttendanceSummary
+    opportunities_count: int
 
     class Config:
         orm_mode = True

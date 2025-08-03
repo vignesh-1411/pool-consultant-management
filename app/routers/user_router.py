@@ -89,7 +89,7 @@ router = APIRouter(tags=["Authentication"])
 load_dotenv()
 
 # Security config
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

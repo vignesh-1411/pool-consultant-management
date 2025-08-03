@@ -1,22 +1,22 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+// import { useState } from 'react'
+// import reactLogo from './assets/react.svg'
+// import viteLogo from '/vite.svg'
+// import './App.css'
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import LoginPage from "./pages/Login";
+// import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+// import LoginPage from "./pages/Login";
 
-const App = () => {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<LoginPage />} />
-      </Routes>
-    </Router>
-  );
-};
+// const App = () => {
+//   return (
+//     <Router>
+//       <Routes>
+//         <Route path="/" element={<LoginPage />} />
+//       </Routes>
+//     </Router>
+//   );
+// };
 
-export default App;
+// export default App;
 
 
 // function App() {
@@ -52,3 +52,81 @@ export default App;
 // }
 
 // export default App
+
+// import { Routes, Route, Navigate } from 'react-router-dom';
+// import LoginPage from './pages/Auth/LoginPage';
+// import AdminDashboard from './pages/Admin/Dashboard';
+// import ConsultantDashboard from './pages/Consultant/Dashboard';
+
+// function App() {
+//   const token = localStorage.getItem('token');
+//   const role = localStorage.getItem('role');
+
+//   return (
+//     <Routes>
+//       <Route path="/login" element={<LoginPage />} />
+//       <Route
+//         path="/admin"
+//         element={
+//           token && role === 'admin' ? (
+//             <AdminDashboard />
+//           ) : (
+//             <Navigate to="/login" />
+//           )
+//         }
+//       />
+//       <Route
+//         path="/consultant"
+//         element={
+//           token && role === 'consultant' ? (
+//             <ConsultantDashboard />
+//           ) : (
+//             <Navigate to="/login" />
+//           )
+//         }
+//       />
+//       <Route path="*" element={<Navigate to="/login" />} />
+//     </Routes>
+//   );
+// }
+
+// export default App;
+
+// import React from 'react';
+// import AppRouter from './router';
+
+// const App: React.FC = () => {
+//   return <AppRouter />;
+// };
+
+// export default App;
+
+// import React from 'react';
+// import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+// import LoginPage from './pages/LoginPage';
+// import ConsultantDashboard from './pages/ConsultantDashboard';
+
+// function App() {
+//   return (
+//     <Router>
+//       <Routes>
+//         <Route path="/" element={<Navigate to="/login" />} />
+//         <Route path="/login" element={<LoginPage />} />
+//         <Route path="/consultant/dashboard" element={<ConsultantDashboard />} />
+//       </Routes>
+//     </Router>
+//   );
+// }
+
+// export default App;
+
+import React from 'react';
+import AppRouter from './router';
+
+
+const App: React.FC = () => {
+  return <AppRouter />;
+  
+};
+
+export default App;

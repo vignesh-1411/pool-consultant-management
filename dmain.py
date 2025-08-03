@@ -17,11 +17,11 @@ from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # In development, "*" is okay. For production, restrict to ["http://localhost:5173"] or your domain
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-allow_origins=["http://localhost:5173"]
+# allow_origins=["http://localhost:5173"]
 
 
 # Load environment variables
@@ -217,7 +217,18 @@ def list_consultants(
         "department": c.department,
         "skills": c.skills,
         "status": c.status,
-        "resume_status": c.resume_status
+        "resume_status": c.resume_status,
+        # Add these new fields
+        "attendance_summary": {
+            "present_days": db.query(Attendance)
+                            .filter(Attendance.user_id == c.id)
+                            .filter(Attendance.status == "present")
+                            .count(),
+            "total_days": db.query(Attendance)
+                          .filter(Attendance.user_id == c.id)
+                          .count() or 1  # Avoid division by zero
+        },
+        "training_status": c.training_status
     } for c in consultants]
 
 @app.get("/admin/consultant/{user_id}")
@@ -251,6 +262,64 @@ def get_consultant_details(user_id: int, db: Session = Depends(get_db)):
         }
     }
 
+from fastapi.responses import StreamingResponse
+import csv
+import io
+
+@app.get("/consultants/{consultant_id}/report")  # Changed route to be simpler
+def download_consultant_report(
+    consultant_id: int,
+    db: Session = Depends(get_db)  # Removed admin dependency
+):
+    consultant = db.query(User).filter(
+        User.id == consultant_id,
+        User.role == "consultant"
+    ).first()
+    
+    if not consultant:
+        raise HTTPException(404, "Consultant not found")
+    
+    # Get attendance data
+    attendance = db.query(Attendance).filter(
+        Attendance.user_id == consultant_id
+    ).all()
+    
+    # Prepare CSV data
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow([
+        "Name", "Email", "Department", "Status", 
+        "Resume Status", "Training Status", 
+        "Attendance Rate", "Skills"
+    ])
+    
+    # Calculate attendance
+    present_days = sum(1 for a in attendance if a.status == "present")
+    total_days = len(attendance) if attendance else 1  # Avoid division by zero
+    
+    # Write data row
+    writer.writerow([
+        consultant.name,
+        consultant.email or "N/A",  # Handle potential None values
+        consultant.department or "Unassigned",
+        consultant.status,
+        getattr(consultant, 'resume_status', 'pending'),  # Safe attribute access
+        getattr(consultant, 'training_status', 'not_started'),
+        f"{(present_days/total_days)*100:.1f}%",
+        ", ".join(consultant.skills) if consultant.skills else "None"
+    ])
+    
+    # Return as downloadable file
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename={consultant.name}_report.csv"
+        }
+    )
 from fastapi import BackgroundTasks
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 from pydantic import EmailStr

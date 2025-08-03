@@ -89,3 +89,46 @@ class Attendance(Base):
     date = Column(Date)
     status = Column(String(20))  # 'present'|'absent'|'excused'
     user = relationship("User", back_populates="attendance")
+
+# Add to models.py
+
+# Add these imports at the top of your models.py
+from sqlalchemy import DateTime
+from sqlalchemy.sql import func  # This provides SQL functions like now()
+
+class Opportunity(Base):
+    __tablename__ = "opportunities"
+    id = Column(Integer, primary_key=True)
+    consultant_id = Column(Integer, ForeignKey("users.id"))
+    title = Column(String(100))
+    status = Column(String(20))  # 'active'|'completed'
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="opportunities")
+
+# in app/model/models.py
+
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Date
+from sqlalchemy.orm import relationship
+from app.database import Base
+
+class Training(Base):
+    __tablename__ = 'trainings'
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    title = Column(String)
+    provider = Column(String)
+    completed_date = Column(Date)
+    rating = Column(Float)
+    certificate = Column(String)
+
+class Recommendation(Base):
+    __tablename__ = 'recommendations'
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    title = Column(String)
+    provider = Column(String)
+    duration = Column(String)
+    rating = Column(Float)
+    reason = Column(String)
+    priority = Column(String)

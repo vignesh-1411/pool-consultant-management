@@ -2,14 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Set height and reset spacing for Tailwind layout utilities */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Vite default styles preserved with tweaks */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: rgba(129, 76, 76, 0.87);
+  background-color: #fffffff8;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -23,17 +31,17 @@ a {
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  color: #000000;
 }
 
+/* Avoid conflicting layout rules from Vite default */
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
+  display: block;
   min-width: 320px;
-  min-height: 100vh;
+  background-color: inherit;
 }
 
+/* Vite styles preserved */
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
@@ -51,7 +59,7 @@ button {
   transition: border-color 0.25s;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: #050505;
 }
 button:focus,
 button:focus-visible {
@@ -63,9 +71,11 @@ button:focus-visible {
     color: #213547;
     background-color: #ffffff;
   }
+
   a:hover {
-    color: #747bff;
+    color: #4a5b62;
   }
+
   button {
     background-color: #f9f9f9;
   }

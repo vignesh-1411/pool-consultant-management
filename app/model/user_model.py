@@ -74,6 +74,7 @@ class User(Base):
     assessments = relationship("Assessment", back_populates="user")
     learning_progress = relationship("LearningProgress", back_populates="user")
     attendance = relationship("Attendance", back_populates="user")
+    opportunities = relationship("Opportunity", back_populates="user")
 
     def set_password(self, password: str):
         self.hashed_password = pwd_context.hash(password)
