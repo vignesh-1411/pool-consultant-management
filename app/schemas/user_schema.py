@@ -1,32 +1,7 @@
-# from pydantic import BaseModel, EmailStr
-# from enum import Enum
-
-# class UserRole(str, Enum):
-#     admin = "admin"
-#     consultant = "consultant"
-
-# class UserCreate(BaseModel):
-#     name: str
-#     email: EmailStr
-#     password: str
-#     role: UserRole
-
-# class UserLogin(BaseModel):
-#     email: EmailStr
-#     password: str
-
-# class UserResponse(BaseModel):
-#     id: int
-#     name: str
-#     email: EmailStr
-#     role: UserRole
-
-#     class Config:
-#         orm_mode = True
 
 from pydantic import BaseModel, EmailStr, Field
 from enum import Enum
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 class UserRole(str, Enum):
@@ -55,13 +30,22 @@ class TokenData(BaseModel):
     email: Optional[str] = None
     role: Optional[UserRole] = None
 
+class SkillOut(BaseModel):
+    skill: str
+    proficiency: Optional[int] = None
+
+    class Config:
+        orm_mode = True
+
+
 class UserResponse(BaseModel):
     id: int
     name: str
     email: EmailStr
     role: UserRole
     department: Optional[str]
-    skills: Optional[list[str]]
+    # skills: Optional[list[str]]
+    skills: List[SkillOut]
     created_at: datetime
 
     class Config:

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { LoginFormData, AuthResponse } from '../types';
+import type { LoginFormData, AuthResponse, RegisterFormData } from '../types';
 
 // const API_URL = 'http://127.0.0.1:8000'; // Change if needed
 
@@ -22,4 +22,15 @@ export const loginUser = async (data: LoginFormData):Promise<AuthResponse> => {
     throw err;
   }
 };
+
+export const registerUser = async (data: RegisterFormData): Promise<AuthResponse> => {
+  try {
+    const response = await axios.post<AuthResponse>(`${API_URL}/auth/register`, data);
+    return response.data;
+  } catch (err: any) {
+    console.error('❌ Registration error:', err.response?.data || err.message);
+    throw err;
+  }
+};
+
 

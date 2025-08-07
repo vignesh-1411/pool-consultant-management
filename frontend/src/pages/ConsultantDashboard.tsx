@@ -1,7 +1,7 @@
 // // src/pages/ConsultantDashboard.tsx
 
-
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 import { 
   FileText, 
@@ -16,12 +16,17 @@ import {
   Award,
   ExternalLink,
   Star,
-  BookOpen
+  BookOpen,
+  Zap,
+  Activity,
+  Brain,
+  Sparkles
 } from 'lucide-react';
 import ProgressBar from '../components/ProgressBar';
 import ResumeUpload from '../components/ResumeUpload';
 
 interface DashboardStats {
+  skills: { skill: string; proficiency: number }[]; // updated from string[]
   resumeStatus: 'updated' | 'pending';
   attendanceRate: number;
   opportunitiesCount: number;
@@ -30,18 +35,21 @@ interface DashboardStats {
 }
 
 interface TrainingRecommendation {
-  title: string;
-  provider: string;
-  duration: string;
-  rating: number;
-  url: string;
+  skill: string;
+  course_title: string;
+  platform: string;
+  link: string;
   reason: string;
-  priority: 'high' | 'medium' | 'low';
 }
 
+
+
+
 const ConsultantDashboard: React.FC = () => {
+  
 
   const [stats, setStats] = useState<DashboardStats>({
+    skills: [],
     resumeStatus: 'updated',
     attendanceRate: 85,
     opportunitiesCount: 3,
@@ -50,71 +58,161 @@ const ConsultantDashboard: React.FC = () => {
   });
   const [showResumeUpload, setShowResumeUpload] = useState(false);
   const [recommendations, setRecommendations] = useState<TrainingRecommendation[]>([]);
-  const [completedTrainings, setCompletedTrainings] = useState([
-    {
-      title: 'Advanced React Patterns',
-      provider: 'Udemy',
-      completedDate: '2024-01-15',
-      rating: 4.8,
-      certificate: true
-    },
-    {
-      title: 'TypeScript Masterclass',
-      provider: 'Udemy',
-      completedDate: '2023-12-10',
-      rating: 4.9,
-      certificate: true
-    }
-  ]);
+  
 
+
+  interface Training {
+  title: string;
+  provider: string;
+  completedDate: string;
+}
+
+const [completedTrainings, setCompletedTrainings] = useState<Training[]>([]);
+const [showAllTrainings, setShowAllTrainings] = useState(false);
+const visibleTrainings = showAllTrainings ? completedTrainings : completedTrainings.slice(0, 4);
+
+useEffect(() => {
+  const fetchCompletedTrainings = async () => {
+    const userId = localStorage.getItem("user_id"); // get from storage
+
+    try {
+      const response = await axios.get(
+        `http://localhost:8000/consultants/${userId}/completed-trainings`
+      );
+
+      // Ensure it's an array before setting
+      const data = Array.isArray(response.data) ? response.data : [];
+      setCompletedTrainings(data);
+    } catch (error) {
+      console.error("Error fetching completed trainings:", error);
+      setCompletedTrainings([]); // fallback to prevent crash
+    }
+  };
+
+  fetchCompletedTrainings();
+}, []);
+
+
+  
+
+
+  
+
+  
+  
+  const userId = localStorage.getItem("user_id");
+  const resumeUrl = `http://localhost:8000/consultants/${userId}/resume`;
+
+ 
   useEffect(() => {
-    // Fetch training recommendations based on user skills
-    fetchTrainingRecommendations();
-  }, []);
+  if (!userId) return;
+  fetchDashboardData();
+  fetchSkills();
+  fetchUserName();
+  fetchTrainingRecommendations();
+}, []);
+
+// const [recommendations, setRecommendations] = useState([]);
+useEffect(() => {
+  const fetchRecommendations = async () => {
+    try {
+      const response = await axios.get(`/consultants/${userId}/training-recommendations/`);
+      setRecommendations(response.data.recommendations || []);
+    } catch (error) {
+      console.error("Error fetching training recommendations:", error);
+    }
+  };
+
+  fetchRecommendations();
+}, [userId]);
+
+const fetchSkills = async () => {
+  try {
+    const res = await fetch(`http://localhost:8000/consultant/${userId}/skills`);
+    const data = await res.json();
+
+    const skillNames = data.map((item: { skill: string }) => item.skill);
+    setStats(prev => ({
+    ...prev,
+    skills: data // data is already an array of { skill, proficiency }
+    }));
+
+  } catch (error) {
+    console.error("Error fetching skills", error);
+  }
+};
+
+
+
+
+
+
+
+  const fetchDashboardData = async () => {
+  try {
+    const res = await fetch(`http://localhost:8000/consultants/${userId}/dashboard`);
+    const data = await res.json();
+
+    setStats(prev => ({
+      ...prev,
+      resumeStatus: data.resumeStatus,
+      attendanceRate: data.attendanceRate,
+      opportunitiesCount: data.opportunitiesCount,
+      trainingProgress: data.trainingProgress,
+      workflowProgress: data.workflowProgress
+    }));
+
+    // setCompletedTrainings(data.completedTrainings || []);
+  } catch (error) {
+    console.error("Error fetching dashboard data", error);
+  }
+};
+
+  
+
+  
 
   const fetchTrainingRecommendations = async () => {
-    // Simulate API call to get personalized recommendations
-    const mockRecommendations: TrainingRecommendation[] = [
-      {
-        title: 'Next.js Complete Guide',
-        provider: 'Udemy',
-        duration: '40 hours',
-        rating: 4.7,
-        url: 'https://www.udemy.com/course/nextjs-react-the-complete-guide/',
-        reason: 'Based on your React expertise, this will enhance your full-stack capabilities',
-        priority: 'high'
-      },
-      {
-        title: 'AWS Solutions Architect',
-        provider: 'Udemy',
-        duration: '65 hours',
-        rating: 4.6,
-        url: 'https://www.udemy.com/course/aws-certified-solutions-architect-associate/',
-        reason: 'Add cloud architecture skills to complement your development expertise',
-        priority: 'high'
-      },
-      {
-        title: 'Docker & Kubernetes Complete Guide',
-        provider: 'Udemy',
-        duration: '35 hours',
-        rating: 4.5,
-        url: 'https://www.udemy.com/course/docker-and-kubernetes-the-complete-guide/',
-        reason: 'Master containerization and orchestration technologies',
-        priority: 'medium'
-      },
-      {
-        title: 'Python for Data Science',
-        provider: 'Udemy',
-        duration: '50 hours',
-        rating: 4.7,
-        url: 'https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/',
-        reason: 'Expand into the high-demand field of data science',
-        priority: 'high'
-      }
-    ];
+  const userId = localStorage.getItem("user_id");
+  if (!userId) return;
 
-    setRecommendations(mockRecommendations);
-  };
+  try {
+    const response = await axios.get(`http://localhost:8000/consultants/${userId}/training-recommendations`);
+    setRecommendations(response.data.recommendations); // assuming the response is { "recommendations": [ "Course A", "Course B", ... ] }
+  } catch (error) {
+    console.error("Failed to fetch training recommendations:", error);
+  }
+};
+const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0];
+  if (!file || !userId) return;
+
+  const formData = new FormData();
+  formData.append("certificate", file);
+
+  try {
+    const response = await fetch(`http://localhost:8000/consultants/${userId}/upload-certificate`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error("Upload failed");
+    }
+
+    const result = await response.json();
+    alert("Certificate uploaded and parsed successfully!");
+    console.log("Certificate upload response:", result);
+
+    // Optional: Update state to reflect new completed trainings
+    setCompletedTrainings(result);  // if response is array of trainings
+  } catch (error) {
+    console.error("Certificate upload error:", error);
+    alert("Failed to upload certificate. Please try again.");
+  }
+};
+
+
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -138,742 +236,426 @@ const ConsultantDashboard: React.FC = () => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return 'bg-red-100 text-red-700';
+        return 'bg-gradient-to-r from-red-100 to-rose-100 text-red-700 border border-red-200';
       case 'medium':
-        return 'bg-yellow-100 text-yellow-700';
+        return 'bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-700 border border-yellow-200';
       case 'low':
-        return 'bg-green-100 text-green-700';
+        return 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border border-green-200';
       default:
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-gradient-to-r from-gray-100 to-slate-100 text-gray-700 border border-gray-200';
     }
   };
+  const [showSkillsModal, setShowSkillsModal] = useState(false);
+  const [userName, setUserName] = useState<string>('');
+
+  const fetchUserName = async () => {
+  try {
+    const res = await fetch(`http://127.0.0.1:8000/admin/consultant/${userId}`);
+    const data = await res.json();
+
+    // Access name from profile
+    const name = data.profile?.name || '';
+    setUserName(name);
+  } catch (error) {
+    console.error("Error fetching user name:", error);
+  }
+  
+
+};
+
+
 
   return (
-    <div className="p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Welcome back,</h1> 
-        <p className="text-gray-600 mt-2">Track your professional development and engagement status</p>
-      </div>
-
-      {/* Current Status Dashboard */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <FileText className="h-8 w-8 text-blue-600" />
-              <div>
-                <h3 className="font-semibold text-gray-900">Resume Status</h3>
-                <p className="text-sm text-gray-500">Last updated 2 days ago</p>
-              </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-10">
+          <div className="flex items-center space-x-4 mb-4">
+            <div className="h-16 w-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl">
+              <Activity className="h-8 w-8 text-white" />
             </div>
-            {getStatusIcon(stats.resumeStatus)}
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700 capitalize">
-              {stats.resumeStatus.replace('_', ' ')}
-            </span>
-            <button
-              onClick={() => setShowResumeUpload(true)}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-            >
-              Update
-            </button>
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Welcome back{userName ? `, ${userName}` : ''}!
+              </h1> 
+              <p className="text-gray-600 mt-2 text-lg">Track your professional development and engagement status</p>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <Calendar className="h-8 w-8 text-green-600" />
-              <div>
-                <h3 className="font-semibold text-gray-900">Attendance</h3>
-                <p className="text-sm text-gray-500">This month</p>
-              </div>
-            </div>
-            {getStatusIcon(stats.attendanceRate > 80 ? 'completed' : 'pending')}
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-2xl font-bold text-gray-900">{stats.attendanceRate}%</span>
-            <TrendingUp className="h-5 w-5 text-green-500" />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <Target className="h-8 w-8 text-purple-600" />
-              <div>
-                <h3 className="font-semibold text-gray-900">Opportunities</h3>
-                <p className="text-sm text-gray-500">During bench period</p>
-              </div>
-            </div>
-            {getStatusIcon(stats.opportunitiesCount > 0 ? 'completed' : 'pending')}
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-2xl font-bold text-gray-900">{stats.opportunitiesCount}</span>
-            <span className="text-sm text-gray-500">documented</span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <GraduationCap className="h-8 w-8 text-orange-600" />
-              <div>
-                <h3 className="font-semibold text-gray-900">Training</h3>
-                <p className="text-sm text-gray-500">Progress status</p>
-              </div>
-            </div>
-            {getStatusIcon(stats.trainingProgress)}
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700 capitalize">
-              {stats.trainingProgress.replace('_', ' ')}
-            </span>
-            <span className="text-sm text-gray-500">3/5 courses</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Real-Time Workflow Progress */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Workflow Progress</h2>
-        <ProgressBar 
-          steps={workflowSteps}
-          currentProgress={stats.workflowProgress}
-        />
-      </div>
-
-      {/* Training Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {/* Completed Trainings */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Completed Training</h2>
-            <BookOpen className="h-6 w-6 text-green-600" />
-          </div>
-          <div className="space-y-4">
-            {completedTrainings.map((training, index) => (
-              <div key={index} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="font-medium text-gray-900">{training.title}</h4>
-                    <p className="text-sm text-gray-600">by {training.provider}</p>
-                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>Completed {new Date(training.completedDate).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Star className="h-4 w-4 text-yellow-500" />
-                        <span>{training.rating}</span>
-                      </div>
+        {/* Current Status Dashboard */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                
+                <div
+                  // className="bg-white p-4 shadow rounded-md cursor-pointer hover:bg-gray-100"
+                  onClick={() => setShowSkillsModal(true)}
+                  className="cursor-pointer group"
+                >
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="h-12 w-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
+                      <BookOpen className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="font-bold text-gray-900 text-lg">Skills</h2>
+                      <p className="text-sm text-gray-500">Click to view details</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    {training.certificate && (
-                      <Award className="h-6 w-6 text-green-500 mb-1" />
-                    )}
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recommended Trainings */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Recommended Training</h2>
-            <GraduationCap className="h-6 w-6 text-blue-600" />
-          </div>
-          <div className="space-y-4">
-            {recommendations.slice(0, 3).map((training, index) => (
-              <div key={index} className="border border-blue-200 bg-blue-50 rounded-lg p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <h4 className="font-medium text-gray-900">{training.title}</h4>
-                      <span className={`px-2 py-1 text-xs rounded ${getPriorityColor(training.priority)}`}>
-                        {training.priority}
+                  <div className="flex flex-wrap gap-2">
+                    {stats.skills.slice(0, 2).map((item, index) => (
+                      <span key={index} className="text-xs bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 px-3 py-1.5 rounded-full font-medium border border-indigo-200">
+                        {item.skill}
                       </span>
-                    </div>
-                    <p className="text-sm text-gray-600">by {training.provider}</p>
-                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                      <div className="flex items-center space-x-1">
-                        <Clock className="h-4 w-4" />
-                        <span>{training.duration}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Star className="h-4 w-4 text-yellow-500" />
-                        <span>{training.rating}</span>
-                      </div>
-                    </div>
-                    <p className="text-sm text-blue-700 mt-2 italic">{training.reason}</p>
+                    ))}
+                    {stats.skills.length > 2 && (
+                      <span className="text-xs bg-gradient-to-r from-gray-100 to-slate-100 text-gray-700 px-3 py-1.5 rounded-full font-medium border border-gray-200">
+                        +{stats.skills.length - 2}
+                      </span>
+                    )}
                   </div>
-                  <a
-                    href={training.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ml-4 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-1 text-sm"
-                  >
-                    <span>View</span>
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
+                </div>
+
+              </div>
+            </div>
+            {showSkillsModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
+                <div className="bg-white p-8 rounded-2xl shadow-2xl w-96 max-w-md mx-4 transform transition-all duration-300">
+                  <div className="flex justify-between items-center mb-6">
+                    <div className="flex items-center space-x-3">
+                      <div className="h-10 w-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <BookOpen className="h-5 w-5 text-white" />
+                      </div>
+                      <h2 className="text-xl font-bold text-gray-900">Skill Proficiency</h2>
+                    </div>
+                    <button 
+                      onClick={() => setShowSkillsModal(false)} 
+                      className="text-gray-400 hover:text-gray-600 text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-all duration-200"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <ul className="space-y-4 max-h-80 overflow-y-auto">
+                    {stats.skills.map((item, index) => (
+                      <li key={index} className="bg-gradient-to-r from-gray-50 to-slate-50 p-4 rounded-xl border border-gray-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-semibold text-gray-900">{item.skill}</span>
+                          <span className="text-sm font-bold text-indigo-600 bg-indigo-100 px-2 py-1 rounded-lg">
+                            {item.proficiency}/10
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
+                          <div
+                            className="bg-gradient-to-r from-indigo-500 to-purple-600 h-3 rounded-full shadow-sm transition-all duration-500"
+                            style={{ width: `${(item.proficiency / 10) * 100}%` }}
+                          ></div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
-            ))}
+            )}
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <FileText className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Resume Status</h3>
+                  <p className="text-sm text-gray-500">Document management</p>
+                </div>
+              </div>
+              {getStatusIcon(stats.resumeStatus)}
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-gray-700 capitalize bg-gradient-to-r from-gray-100 to-slate-100 px-0 py-1.5 rounded-lg border border-gray-200">
+                {stats.resumeStatus.replace('_', ' ')}
+              </span>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setShowResumeUpload(true)}
+                  className="text-blue-600 hover:text-blue-700 text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-all duration-200"
+                >
+                  Update
+                </button>
+                <button
+                  onClick={() => {
+                    if (!userId) return;
+                    window.open(`http://localhost:8000/consultants/${userId}/resume`, "_blank");
+                  }}
+                  className="text-green-600 hover:text-green-700 text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-green-50 transition-all duration-200"
+                >
+                  View
+                </button>
+              </div>
+            </div>
           </div>
           
-          {recommendations.length > 3 && (
-            <div className="mt-4 text-center">
-              <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                View All Recommendations ({recommendations.length})
-              </button>
+
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="h-12 w-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Calendar className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Attendance</h3>
+                  <p className="text-sm text-gray-500">This month</p>
+                </div>
+              </div>
+              {getStatusIcon(stats.attendanceRate > 80 ? 'completed' : 'pending')}
             </div>
-          )}
-        </div>
-      </div>
+            <div className="flex items-center justify-between">
+              <span className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                {stats.attendanceRate}%
+              </span>
+              <div className="flex items-center space-x-2">
+                {/* <TrendingUp className="h-5 w-5 text-green-500" />
+                <span className="text-sm font-medium text-green-600">Excellent</span> */}
+              </div>
+            </div>
+          </div>
 
-      {/* AI Recommendations */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">AI Recommendations</h2>
-        <div className="space-y-3">
-          <div className="flex items-start space-x-3">
-            <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-            <p className="text-gray-700">
-              Consider updating your resume with recent project experience to improve skill matching accuracy.
-            </p>
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Target className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Opportunities</h3>
+                  <p className="text-sm text-gray-500">During bench period</p>
+                </div>
+              </div>
+              {getStatusIcon(stats.opportunitiesCount > 0 ? 'completed' : 'pending')}
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                {stats.opportunitiesCount}
+              </span>
+              <span className="text-sm font-medium text-gray-600 bg-gradient-to-r from-gray-100 to-slate-100 px-3 py-1.5 rounded-lg border border-gray-200">
+                documented
+              </span>
+            </div>
           </div>
-          <div className="flex items-start space-x-3">
-            <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-            <p className="text-gray-700">
-              Complete the pending React Advanced certification to enhance your frontend development profile.
-            </p>
-          </div>
-          <div className="flex items-start space-x-3">
-            <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-            <p className="text-gray-700">
-              Your attendance rate is excellent! Keep maintaining this consistency for better project allocation opportunities.
-            </p>
-          </div>
-          <div className="flex items-start space-x-3">
-            <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-            <p className="text-gray-700">
-              Based on market trends, consider learning cloud technologies like AWS or Azure to increase your market value.
-            </p>
+
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="h-12 w-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <GraduationCap className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Training</h3>
+                  <p className="text-sm text-gray-500">Progress status</p>
+                </div>
+              </div>
+              {getStatusIcon(stats.trainingProgress)}
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold capitalize bg-gradient-to-r from-orange-100 to-red-100 text-orange-700 px-3 py-1.5 rounded-lg border border-orange-200">
+                {stats.trainingProgress.replace('_', ' ')}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Resume Upload Modal */}
-      {showResumeUpload && (
-        <ResumeUpload onClose={() => setShowResumeUpload(false)} />
-      )}
+        {/* Real-Time Workflow Progress */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-10 hover:shadow-xl transition-all duration-300">
+          <div className="flex items-center space-x-4 mb-8">
+            <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+              <Zap className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Workflow Progress</h2>
+              <p className="text-gray-600">Track your completion status across key areas</p>
+            </div>
+          </div>
+          <ProgressBar 
+            steps={workflowSteps}
+            currentProgress={stats.workflowProgress}
+          />
+        </div>
+
+        {/* Training Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+          {/* Completed Trainings */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 hover:shadow-xl transition-all duration-300">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center space-x-4">
+                <div className="h-12 w-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <BookOpen className="h-6 w-6 text-white" />
+                </div>
+                
+                  <h2 className="text-xl font-bold text-gray-900">Completed Training</h2>
+                  
+
+                  <p className="text-gray-600">Your learning achievements</p>
+                  <div>
+                  <div className="mt-4">
+                    <label className="text-sm font-medium text-gray-700">Upload Certificate:</label>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleCertificateUpload}
+                      className="mt-2 block w-full text-sm text-white
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-full file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-emerald-50 file:text-emerald-700
+                                hover:file:bg-emerald-100"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+
+            </div>
+            <div className="max-h-96 overflow-y-auto pr-2 space-y-4 scroll-smooth">
+              {completedTrainings.map((training, index) => (
+                <div
+                  key={index}
+                  className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 hover:shadow-md transition-all duration-300"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-bold text-gray-900 text-lg mb-1">
+                        {training.title || "Untitled Course"}
+                      </h4>
+                      <p className="text-sm text-gray-600 mb-3">
+                        by {training.provider || "Unknown Provider"}
+                      </p>
+                      <div className="flex items-center space-x-6 text-sm text-gray-500">
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="h-4 w-4" />
+                          <span>
+                            Completed{" "}
+                            {training.completedDate
+                              ? new Date(training.completedDate).toLocaleDateString()
+                              : "Unknown Date"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right flex flex-col items-center space-y-2">
+                      <CheckCircle className="h-6 w-6 text-green-500" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recommended Trainings */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 hover:shadow-xl transition-all duration-300">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center space-x-4">
+                <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <GraduationCap className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Recommended Training</h2>
+                  <p className="text-gray-600">Personalized for your growth</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2">
+              {recommendations.map((training, index) => (
+                <div
+                  key={index}
+                  className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 hover:shadow-md transition-all duration-300"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-bold text-gray-900 text-lg mb-1">
+                        {training.course_title}
+                      </h4>
+                      <p className="text-sm text-gray-600 mb-2">
+                        Platform: {training.platform} | Skill: {training.skill}
+                      </p>
+                      <p className="text-sm text-blue-700 italic bg-blue-100 p-3 rounded-lg border border-blue-200">
+                        {training.reason}
+                      </p>
+                    </div>
+                    <a
+                      href={training.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-4 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center space-x-2 text-sm font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                    >
+                      <span>View</span>
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+
+        {/* AI Recommendations */}
+        <div className="bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 rounded-2xl border border-indigo-200 p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+          <div className="flex items-center space-x-4 mb-8">
+            <div className="h-14 w-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl">
+              <Brain className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-2">
+                <span>AI Recommendations</span>
+                <Sparkles className="h-6 w-6 text-indigo-500" />
+              </h2>
+              <p className="text-gray-600">Personalized insights to accelerate your career growth</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl p-6 shadow-md border border-indigo-100 hover:shadow-lg transition-all duration-300">
+              <div className="flex items-start space-x-4">
+                <div className="w-3 h-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full mt-2 shadow-sm"></div>
+                <p className="text-gray-700 leading-relaxed">
+                  Consider updating your resume with recent project experience to improve skill matching accuracy.
+                </p>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-6 shadow-md border border-indigo-100 hover:shadow-lg transition-all duration-300">
+              <div className="flex items-start space-x-4">
+                <div className="w-3 h-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full mt-2 shadow-sm"></div>
+                <p className="text-gray-700 leading-relaxed">
+                  Complete the pending React Advanced certification to enhance your frontend development profile.
+                </p>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-6 shadow-md border border-indigo-100 hover:shadow-lg transition-all duration-300">
+              <div className="flex items-start space-x-4">
+                <div className="w-3 h-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full mt-2 shadow-sm"></div>
+                <p className="text-gray-700 leading-relaxed">
+                  Your attendance rate is excellent! Keep maintaining this consistency for better project allocation opportunities.
+                </p>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-6 shadow-md border border-indigo-100 hover:shadow-lg transition-all duration-300">
+              <div className="flex items-start space-x-4">
+                <div className="w-3 h-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full mt-2 shadow-sm"></div>
+                <p className="text-gray-700 leading-relaxed">
+                  Based on market trends, consider learning cloud technologies like AWS or Azure to increase your market value.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Resume Upload Modal */}
+        {showResumeUpload && (
+          <ResumeUpload onClose={() => setShowResumeUpload(false)} />
+        )}
+      </div>
     </div>
   );
 };
 
 export default ConsultantDashboard;
-// import React, { useState, useEffect } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import { 
-//   User, 
-//   Calendar, 
-//   Target, 
-//   BookOpen, 
-//   CheckCircle, 
-//   Clock, 
-//   AlertCircle, 
-//   LogOut,
-//   Waves,
-//   FileText,
-//   Users,
-//   Award,
-//   TrendingUp,
-//   Activity,
-//   Upload,
-//   Edit3,
-//   Eye,
-//   Download
-// } from 'lucide-react';
-
-// interface ConsultantStatus {
-//   resumeStatus: 'updated' | 'pending';
-//   attendanceReport: {
-//     completed: number;
-//     missed: number;
-//     total: number;
-//   };
-//   opportunities: {
-//     provided: number;
-//     completed: number;
-//     pending: number;
-//   };
-//   trainingProgress: 'not_started' | 'in_progress' | 'completed';
-//   workflowProgress: {
-//     resumeUpdated: boolean;
-//     attendanceReported: boolean;
-//     opportunitiesDocumented: boolean;
-//     trainingCompleted: boolean;
-//   };
-// }
-
-// interface ConsultantProfile {
-//   id: string;
-//   name: string;
-//   email: string;
-//   department: string;
-//   joinDate: string;
-//   rating: number;
-//   completedJobs: number;
-//   skills: string[];
-// }
-
-// function ConsultantDashboard() {
-//   const navigate = useNavigate();
-//   const [consultantData, setConsultantData] = useState<ConsultantProfile>({
-//     id: '1',
-//     name: 'Navanth Raja',
-//     email: 'navanth.raja@poolconsult.com',
-//     department: 'Pool Maintenance',
-//     joinDate: '2024-01-15',
-//     rating: 4.8,
-//     completedJobs: 127,
-//     skills: ['Chemical Balancing', 'Equipment Repair', 'Cleaning']
-//   });
-
-//   const [status, setStatus] = useState<ConsultantStatus>({
-//     resumeStatus: 'pending',
-//     attendanceReport: {
-//       completed: 23,
-//       missed: 2,
-//       total: 25
-//     },
-//     opportunities: {
-//       provided: 15,
-//       completed: 12,
-//       pending: 3
-//     },
-//     trainingProgress: 'in_progress',
-//     workflowProgress: {
-//       resumeUpdated: false,
-//       attendanceReported: true,
-//       opportunitiesDocumented: true,
-//       trainingCompleted: false
-//     }
-//   });
-
-//   const [loading, setLoading] = useState(false);
-
-//   const handleLogout = () => {
-//     navigate('/');
-//   };
-
-//   const updateWorkflowItem = (item: keyof ConsultantStatus['workflowProgress']) => {
-//     setStatus(prev => ({
-//       ...prev,
-//       workflowProgress: {
-//         ...prev.workflowProgress,
-//         [item]: !prev.workflowProgress[item]
-//       }
-//     }));
-//   };
-
-//   const updateResumeStatus = () => {
-//     setLoading(true);
-//     setTimeout(() => {
-//       setStatus(prev => ({
-//         ...prev,
-//         resumeStatus: 'updated',
-//         workflowProgress: {
-//           ...prev.workflowProgress,
-//           resumeUpdated: true
-//         }
-//       }));
-//       setLoading(false);
-//     }, 1500);
-//   };
-
-//   const calculateWorkflowProgress = () => {
-//     const completed = Object.values(status.workflowProgress).filter(Boolean).length;
-//     return (completed / 4) * 100;
-//   };
-
-//   const getStatusColor = (statusType: string, value: any) => {
-//     switch (statusType) {
-//       case 'resume':
-//         return value === 'updated' ? 'text-green-600 bg-green-100' : 'text-yellow-600 bg-yellow-100';
-//       case 'training':
-//         if (value === 'completed') return 'text-green-600 bg-green-100';
-//         if (value === 'in_progress') return 'text-blue-600 bg-blue-100';
-//         return 'text-gray-600 bg-gray-100';
-//       default:
-//         return 'text-gray-600 bg-gray-100';
-//     }
-//   };
-
-//   const workflowItems = [
-//     {
-//       key: 'resumeUpdated' as const,
-//       label: 'Resume Updated',
-//       icon: FileText,
-//       description: 'Update your professional resume'
-//     },
-//     {
-//       key: 'attendanceReported' as const,
-//       label: 'Attendance Reported',
-//       icon: Calendar,
-//       description: 'Submit monthly attendance report'
-//     },
-//     {
-//       key: 'opportunitiesDocumented' as const,
-//       label: 'Opportunities Documented',
-//       icon: Target,
-//       description: 'Document client opportunities'
-//     },
-//     {
-//       key: 'trainingCompleted' as const,
-//       label: 'Training Completed',
-//       icon: BookOpen,
-//       description: 'Complete required training modules'
-//     }
-//   ];
-
-//   return (
-//     <div className="min-h-screen bg-gray-50">
-//       {/* Header */}
-//       <header className="bg-white shadow-sm border-b border-gray-200">
-//         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-//           <div className="flex justify-between items-center h-16">
-//             <div className="flex items-center">
-//               <Waves className="w-8 h-8 text-blue-600 mr-3" />
-//               <div>
-//                 <h1 className="text-xl font-bold text-gray-900">Consultant Dashboard</h1>
-//                 <p className="text-sm text-gray-500">Welcome back, {consultantData.name}</p>
-//               </div>
-//             </div>
-//             <button
-//               onClick={handleLogout}
-//               className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-//             >
-//               <LogOut className="w-4 h-4 mr-2" />
-//               Logout
-//             </button>
-//           </div>
-//         </div>
-//       </header>
-
-//       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-//         {/* Profile Overview */}
-//         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-//           <div className="flex items-center justify-between mb-6">
-//             <h2 className="text-2xl font-bold text-gray-900">Profile Overview</h2>
-//             <div className="flex items-center space-x-4">
-//               <div className="text-right">
-//                 <p className="text-sm text-gray-500">Member since</p>
-//                 <p className="font-medium text-gray-900">{new Date(consultantData.joinDate).toLocaleDateString()}</p>
-//               </div>
-//             </div>
-//           </div>
-          
-//           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-//             <div className="text-center">
-//               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-//                 <User className="w-8 h-8 text-blue-600" />
-//               </div>
-//               <p className="text-sm text-gray-500">Department</p>
-//               <p className="font-semibold text-gray-900">{consultantData.department}</p>
-//             </div>
-            
-//             <div className="text-center">
-//               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-//                 <Award className="w-8 h-8 text-green-600" />
-//               </div>
-//               <p className="text-sm text-gray-500">Rating</p>
-//               <p className="font-semibold text-gray-900">⭐ {consultantData.rating}</p>
-//             </div>
-            
-//             <div className="text-center">
-//               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-//                 <TrendingUp className="w-8 h-8 text-purple-600" />
-//               </div>
-//               <p className="text-sm text-gray-500">Completed Jobs</p>
-//               <p className="font-semibold text-gray-900">{consultantData.completedJobs}</p>
-//             </div>
-            
-//             <div className="text-center">
-//               <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
-//                 <Activity className="w-8 h-8 text-orange-600" />
-//               </div>
-//               <p className="text-sm text-gray-500">Skills</p>
-//               <p className="font-semibold text-gray-900">{consultantData.skills.length} Skills</p>
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Current Status Dashboard */}
-//         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-//           {/* Resume Update Status */}
-//           <div className="bg-white rounded-lg shadow-sm p-6">
-//             <div className="flex items-center justify-between mb-4">
-//               <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-//                 <FileText className="w-5 h-5 mr-2 text-blue-600" />
-//                 Resume Status
-//               </h3>
-//               <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor('resume', status.resumeStatus)}`}>
-//                 {status.resumeStatus === 'updated' ? 'Updated' : 'Pending'}
-//               </span>
-//             </div>
-            
-//             <p className="text-gray-600 mb-4">
-//               {status.resumeStatus === 'updated' 
-//                 ? 'Your resume is up to date and ready for opportunities.'
-//                 : 'Please update your resume to reflect your latest experience and skills.'
-//               }
-//             </p>
-            
-//             <div className="flex space-x-3">
-//               <button
-//                 onClick={updateResumeStatus}
-//                 disabled={loading || status.resumeStatus === 'updated'}
-//                 className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
-//                   status.resumeStatus === 'updated'
-//                     ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-//                     : 'bg-blue-600 text-white hover:bg-blue-700'
-//                 }`}
-//               >
-//                 {loading ? (
-//                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-//                 ) : (
-//                   <Upload className="w-4 h-4 mr-2" />
-//                 )}
-//                 {status.resumeStatus === 'updated' ? 'Updated' : 'Update Resume'}
-//               </button>
-              
-//               <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200">
-//                 <Eye className="w-4 h-4 mr-2" />
-//                 View Current
-//               </button>
-//             </div>
-//           </div>
-
-//           {/* Attendance Report */}
-//           <div className="bg-white rounded-lg shadow-sm p-6">
-//             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-//               <Calendar className="w-5 h-5 mr-2 text-green-600" />
-//               Attendance Report
-//             </h3>
-            
-//             <div className="space-y-4">
-//               <div className="flex justify-between items-center">
-//                 <span className="text-gray-600">Completed Sessions</span>
-//                 <span className="font-semibold text-green-600">{status.attendanceReport.completed}</span>
-//               </div>
-              
-//               <div className="flex justify-between items-center">
-//                 <span className="text-gray-600">Missed Sessions</span>
-//                 <span className="font-semibold text-red-600">{status.attendanceReport.missed}</span>
-//               </div>
-              
-//               <div className="flex justify-between items-center border-t pt-3">
-//                 <span className="text-gray-900 font-medium">Total Sessions</span>
-//                 <span className="font-bold text-gray-900">{status.attendanceReport.total}</span>
-//               </div>
-              
-//               <div className="mt-4">
-//                 <div className="flex justify-between text-sm text-gray-600 mb-1">
-//                   <span>Attendance Rate</span>
-//                   <span>{Math.round((status.attendanceReport.completed / status.attendanceReport.total) * 100)}%</span>
-//                 </div>
-//                 <div className="w-full bg-gray-200 rounded-full h-2">
-//                   <div 
-//                     className="bg-green-600 h-2 rounded-full transition-all duration-300"
-//                     style={{ width: `${(status.attendanceReport.completed / status.attendanceReport.total) * 100}%` }}
-//                   ></div>
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-
-//           {/* Opportunities Provided */}
-//           <div className="bg-white rounded-lg shadow-sm p-6">
-//             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-//               <Target className="w-5 h-5 mr-2 text-purple-600" />
-//               Opportunities Provided
-//             </h3>
-            
-//             <div className="grid grid-cols-3 gap-4">
-//               <div className="text-center">
-//                 <p className="text-2xl font-bold text-purple-600">{status.opportunities.provided}</p>
-//                 <p className="text-sm text-gray-600">Total</p>
-//               </div>
-              
-//               <div className="text-center">
-//                 <p className="text-2xl font-bold text-green-600">{status.opportunities.completed}</p>
-//                 <p className="text-sm text-gray-600">Completed</p>
-//               </div>
-              
-//               <div className="text-center">
-//                 <p className="text-2xl font-bold text-yellow-600">{status.opportunities.pending}</p>
-//                 <p className="text-sm text-gray-600">Pending</p>
-//               </div>
-//             </div>
-            
-//             <div className="mt-4">
-//               <div className="flex justify-between text-sm text-gray-600 mb-1">
-//                 <span>Success Rate</span>
-//                 <span>{Math.round((status.opportunities.completed / status.opportunities.provided) * 100)}%</span>
-//               </div>
-//               <div className="w-full bg-gray-200 rounded-full h-2">
-//                 <div 
-//                   className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-//                   style={{ width: `${(status.opportunities.completed / status.opportunities.provided) * 100}%` }}
-//                 ></div>
-//               </div>
-//             </div>
-//           </div>
-
-//           {/* Training Progress */}
-//           <div className="bg-white rounded-lg shadow-sm p-6">
-//             <div className="flex items-center justify-between mb-4">
-//               <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-//                 <BookOpen className="w-5 h-5 mr-2 text-orange-600" />
-//                 Training Progress
-//               </h3>
-//               <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor('training', status.trainingProgress)}`}>
-//                 {status.trainingProgress.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-//               </span>
-//             </div>
-            
-//             <div className="space-y-4">
-//               <div className="flex items-center justify-between">
-//                 <span className="text-gray-600">Current Module</span>
-//                 <span className="font-medium text-gray-900">Advanced Pool Chemistry</span>
-//               </div>
-              
-//               <div className="flex items-center justify-between">
-//                 <span className="text-gray-600">Modules Completed</span>
-//                 <span className="font-medium text-gray-900">7 of 10</span>
-//               </div>
-              
-//               <div className="mt-4">
-//                 <div className="flex justify-between text-sm text-gray-600 mb-1">
-//                   <span>Overall Progress</span>
-//                   <span>70%</span>
-//                 </div>
-//                 <div className="w-full bg-gray-200 rounded-full h-2">
-//                   <div className="bg-orange-600 h-2 rounded-full transition-all duration-300" style={{ width: '70%' }}></div>
-//                 </div>
-//               </div>
-              
-//               <button className="w-full mt-4 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors duration-200">
-//                 Continue Training
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Real-Time Workflow Progress */}
-//         <div className="bg-white rounded-lg shadow-sm p-6">
-//           <div className="flex items-center justify-between mb-6">
-//             <h3 className="text-xl font-semibold text-gray-900">Workflow Progress</h3>
-//             <div className="text-right">
-//               <p className="text-sm text-gray-500">Overall Completion</p>
-//               <p className="text-2xl font-bold text-blue-600">{Math.round(calculateWorkflowProgress())}%</p>
-//             </div>
-//           </div>
-          
-//           {/* Progress Bar */}
-//           <div className="mb-8">
-//             <div className="w-full bg-gray-200 rounded-full h-3">
-//               <div 
-//                 className="bg-gradient-to-r from-blue-600 to-purple-600 h-3 rounded-full transition-all duration-500 ease-out"
-//                 style={{ width: `${calculateWorkflowProgress()}%` }}
-//               ></div>
-//             </div>
-//             <div className="flex justify-between text-xs text-gray-500 mt-1">
-//               <span>0%</span>
-//               <span>25%</span>
-//               <span>50%</span>
-//               <span>75%</span>
-//               <span>100%</span>
-//             </div>
-//           </div>
-          
-//           {/* Workflow Items */}
-//           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-//             {workflowItems.map((item) => {
-//               const isCompleted = status.workflowProgress[item.key];
-//               const Icon = item.icon;
-              
-//               return (
-//                 <div
-//                   key={item.key}
-//                   className={`relative p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer hover:shadow-md ${
-//                     isCompleted
-//                       ? 'border-green-500 bg-green-50'
-//                       : 'border-gray-200 bg-white hover:border-gray-300'
-//                   }`}
-//                   onClick={() => updateWorkflowItem(item.key)}
-//                 >
-//                   <div className="flex items-center justify-between mb-3">
-//                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-//                       isCompleted ? 'bg-green-500' : 'bg-gray-200'
-//                     }`}>
-//                       {isCompleted ? (
-//                         <CheckCircle className="w-6 h-6 text-white" />
-//                       ) : (
-//                         <Icon className="w-6 h-6 text-gray-600" />
-//                       )}
-//                     </div>
-                    
-//                     {isCompleted && (
-//                       <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-//                         <CheckCircle className="w-4 h-4 text-white" />
-//                       </div>
-//                     )}
-//                   </div>
-                  
-//                   <h4 className={`font-medium mb-2 ${isCompleted ? 'text-green-800' : 'text-gray-900'}`}>
-//                     {item.label}
-//                   </h4>
-                  
-//                   <p className={`text-sm ${isCompleted ? 'text-green-600' : 'text-gray-600'}`}>
-//                     {item.description}
-//                   </p>
-                  
-//                   <div className="mt-3">
-//                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-//                       isCompleted 
-//                         ? 'bg-green-100 text-green-800' 
-//                         : 'bg-gray-100 text-gray-800'
-//                     }`}>
-//                       {isCompleted ? 'Completed' : 'Pending'}
-//                     </span>
-//                   </div>
-//                 </div>
-//               );
-//             })}
-//           </div>
-          
-//           {/* Action Buttons */}
-//           <div className="mt-8 flex justify-center space-x-4">
-//             <button className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
-//               <Download className="w-5 h-5 mr-2" />
-//               Download Progress Report
-//             </button>
-            
-//             <button className="flex items-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-//               <Edit3 className="w-5 h-5 mr-2" />
-//               Update Information
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default ConsultantDashboard;

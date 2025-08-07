@@ -1,17 +1,11 @@
-// import React from 'react';
-// import LoginForm from '../components/LoginForm';
 
-// const LoginPage: React.FC = () => {
-//   return <LoginForm />;
-// };
-
-// export default LoginPage;
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock, Mail, Waves } from 'lucide-react';
 import { loginUser } from '../services/authService';
 import type { LoginFormData } from '../types';
+import axios from 'axios'; // Register call will use this
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -86,7 +80,7 @@ function LoginPage() {
       <div className="w-full max-w-xl mx-auto">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full mb-4 shadow-lg">
-            <Waves className="w-8 h-8 text-white" />
+            <User className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Pool Consultant Management
@@ -192,11 +186,22 @@ function LoginPage() {
               {isLoading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
-
+          
+              <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+                {/* ... your login form ... */}
+                <p className="mt-4 text-center text-gray-600">
+                  Don't have an account?{' '}
+                  <a href="/register" className="text-blue-600 hover:underline"> 
+                    Register here
+                  </a>
+                </p>
+              </div>
+          
+        </div>
           <div className="mt-6 text-center text-sm text-gray-600">
             Need help? Contact your system administrator.
           </div>
-        </div>
+          
 
         <div className="mt-8 text-center text-xs text-gray-500">
           © 2025 Pool Consultant Management. All rights reserved.

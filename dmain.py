@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from datetime import date
 from app.database import get_db
 from app.model.user_model import User
-from app.model.models import Assessment, LearningProgress, Attendance
+from app.model.models import Assessment, LearningProgress, Attendance, Skill
 from passlib.context import CryptContext
 import os
 from dotenv import load_dotenv
@@ -16,12 +16,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In development, "*" is okay. For production, restrict to ["http://localhost:5173"] or your domain
-    allow_credentials=False,
+    allow_origins=["http://localhost:5173"],  # In development, "*" is okay. For production, restrict to ["http://localhost:5173"] or your domain
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 # allow_origins=["http://localhost:5173"]
+# app.include_router(auth_router, prefix="/auth")
 
 
 # Load environment variables
@@ -33,6 +34,15 @@ import os
 load_dotenv()
 
 print("EMAIL_PASS from .env:", os.getenv("EMAIL_PASS"))  # ✅ Add this
+
+import google.generativeai as genai
+
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
+
+from app.routers import user_router
+
+app.include_router(user_router.router, prefix="/auth")
 
 
 
@@ -262,6 +272,182 @@ def get_consultant_details(user_id: int, db: Session = Depends(get_db)):
         }
     }
 
+from fastapi import UploadFile, File
+import shutil
+
+@app.post("/upload-file")
+def upload_resume_file(
+    user_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """
+    Uploads a resume file and updates the user's resume_file field
+    """
+    user = db.query(User).filter(User.id == user_id, User.role == "consultant").first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Consultant not found")
+
+    # Create folder if it doesn't exist
+    os.makedirs("resumes", exist_ok=True)
+
+    # Save file with unique name
+    filename = f"{user_id}_{file.filename}"
+    filepath = os.path.join("resumes", filename)
+
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    # Save file name in database
+    user.resume_file = filename
+    db.commit()
+
+    return {
+        "message": "Resume uploaded successfully",
+        "file": filename
+    }
+
+from fastapi import UploadFile, File, Form, HTTPException, Depends
+from sqlalchemy.orm import Session
+import docx
+import fitz  # PyMuPDF
+import os
+import google.generativeai as genai
+import json
+
+@app.post("/process-resume-ai")
+def process_resume_ai(
+    user_id: int = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id, User.role == "consultant").first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Consultant not found")
+
+    # Extract text based on file type
+    contents = ""
+    if file.filename.endswith(".pdf"):
+        try:
+            with fitz.open(stream=file.file.read(), filetype="pdf") as pdf:
+                contents = "\n".join([page.get_text() for page in pdf])
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Error reading PDF: {str(e)}")
+    elif file.filename.endswith(".docx"):
+        try:
+            doc = docx.Document(file.file)
+            contents = "\n".join([para.text for para in doc.paragraphs])
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Error reading DOCX: {str(e)}")
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+
+    # Prompt Gemini
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+    model = genai.GenerativeModel("gemini-2.0-flash")
+
+    prompt = f"""
+    You are an API. Analyze the resume text below and return ONLY a JSON array with each skill, its proficiency (1–10).
+
+    Format:
+    [
+    {{
+        "skill": "Python",
+        "proficiency": 5,
+        
+    }},
+    ...
+    ]
+
+    Do not return any explanation or commentary. Only valid JSON output.
+
+    Resume:
+    {contents}
+    """
+
+
+
+
+    try:
+        response = model.generate_content(prompt)
+        skills_data = response.text.strip()
+        import re
+
+        # Remove Markdown-style triple backticks (e.g., ```json ... ```)
+        cleaned_data = re.sub(r"^```(?:json)?\s*|\s*```$", "", skills_data.strip(), flags=re.IGNORECASE)
+        parsed_skills = json.loads(cleaned_data)
+
+        # parsed_skills = json.loads(skills_data)
+        # skills_data = response.text.strip()
+        # print("\n\n========== RAW GEMINI RESPONSE ==========")
+        # print(skills_data)
+        # print("=========================================\n\n")
+        # return {
+        # "raw_output": skills_data
+        # }
+        
+
+
+
+        # Optional: Update DB with skill names
+        # user.skills = [s["skill"] for s in parsed_skills]
+        user.skills.clear()  # optional, if you want to remove old skills first
+
+        user.skills = [
+        Skill(skill=s["skill"], proficiency=s["proficiency"], user_id=user.id)
+        for s in parsed_skills
+        ]
+
+        user.resume_status = "updated"
+        db.commit()
+
+        return {
+            "message": "Resume processed with Gemini AI",
+            "user_id": user.id,
+            "skills": parsed_skills
+        }
+
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Gemini returned invalid JSON")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gemini error: {str(e)}")
+    
+@app.get("/consultant/{user_id}/skills")
+def get_skills(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    skills = db.query(Skill).filter(Skill.user_id == user_id).all()
+    return [{"skill": s.skill, "proficiency": s.proficiency} for s in skills]
+
+
+from fastapi.responses import FileResponse
+
+@app.get("/consultants/{user_id}/resume")
+def download_resume_by_user(user_id: int, db: Session = Depends(get_db)):
+    """
+    Download resume file by user ID
+    """
+    user = db.query(User).filter(User.id == user_id, User.role == "consultant").first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Consultant not found")
+    
+    if not user.resume_file:
+        raise HTTPException(status_code=404, detail="No resume uploaded for this consultant")
+    
+    file_path = os.path.join("resumes", user.resume_file)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Resume file not found")
+
+    return FileResponse(
+        path=file_path,
+        media_type="application/octet-stream",
+        filename=user.resume_file
+    )
+
+
+
 from fastapi.responses import StreamingResponse
 import csv
 import io
@@ -308,7 +494,7 @@ def download_consultant_report(
         getattr(consultant, 'resume_status', 'pending'),  # Safe attribute access
         getattr(consultant, 'training_status', 'not_started'),
         f"{(present_days/total_days)*100:.1f}%",
-        ", ".join(consultant.skills) if consultant.skills else "None"
+        ", ".join(skill.skill for skill in consultant.skills) if consultant.skills else "None"
     ])
     
     # Return as downloadable file
@@ -359,3 +545,290 @@ async def send_notification(
         "<h1>Attendance Submitted</h1><p>Your status was recorded</p>"
     )
     return {"message": "Notification queued"}
+
+#---------------------------------------------------------------------------------------
+
+
+from sqlalchemy.orm import Session
+from app.model.models import Attendance, Training, Recommendation
+from app.model.user_model import User
+
+def get_consultant_dashboard_data(db: Session, user_id: int):
+    user = db.query(User).filter(User.id == user_id, User.role == "consultant").first()
+    if not user:
+        return None
+
+    # Resume status
+    resume_status = user.resume_status or "pending"
+
+    # Attendance rate
+    attendance = db.query(Attendance).filter(Attendance.user_id == user_id).all()
+    present_days = sum(1 for a in attendance if a.status == "present")
+    total_days = len(attendance) or 1
+    attendance_rate = int((present_days / total_days) * 100)
+
+    # Dummy count for opportunities (replace with real logic if needed)
+    opportunities_count = 2
+
+    # Training status
+    training_status = "completed"
+
+    # Workflow progress (example logic)
+    workflow_progress = 70 if training_status == "in_progress" else 100 if training_status == "completed" else 20
+
+    # Trainings
+    completed_trainings = db.query(Training).filter(Training.user_id == user_id).all()
+    trainings_data = [{
+        "title": t.title,
+        "provider": t.provider,
+        "completedDate": str(t.completed_date),
+        "rating": t.rating,
+        "certificate": bool(t.certificate)
+    } for t in completed_trainings]
+
+    # Recommendations
+    recs = db.query(Recommendation).filter(Recommendation.user_id == user_id).all()
+    recs_data = [{
+        "title": r.title,
+        "provider": r.provider,
+        "duration": r.duration,
+        "rating": r.rating,
+        "url": "",  # Add if you have
+        "reason": r.reason,
+        "priority": r.priority
+    } for r in recs]
+
+    return {
+        "resumeStatus": resume_status,
+        "attendanceRate": attendance_rate,
+        "opportunitiesCount": opportunities_count,
+        "trainingProgress": training_status,
+        "workflowProgress": workflow_progress,
+        "completedTrainings": trainings_data,
+        "recommendations": recs_data
+    }
+from fastapi import Depends
+from fastapi.security import OAuth2PasswordBearer
+from app.database import get_db
+
+# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+@app.get("/consultants/{user_id}/dashboard")
+def consultant_dashboard(user_id: int, db: Session = Depends(get_db)):
+    # from app.utils.consultant_dashboard import get_consultant_dashboard_data  # if placed in separate file
+    data = get_consultant_dashboard_data(db, user_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Consultant not found")
+    return data
+
+from fastapi import UploadFile, File
+import csv
+from datetime import datetime, timedelta
+
+@app.post("/upload-attendance")
+def upload_attendance(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=400, detail="File must be a CSV")
+
+    contents = file.file.read().decode("utf-8").splitlines()
+    reader = csv.DictReader(contents)
+
+    for row in reader:
+        # Example: Adapt keys based on Teams CSV format
+        name = row["Full Name"]
+        join_time_str = row["Join Time"]   # e.g., "8/5/2025, 10:00:00 AM"
+        leave_time_str = row["Leave Time"]
+
+        # Parse datetimes
+        join_time = datetime.strptime(join_time_str, "%m/%d/%Y, %I:%M:%S %p")
+        leave_time = datetime.strptime(leave_time_str, "%m/%d/%Y, %I:%M:%S %p")
+        duration = (leave_time - join_time).seconds // 60
+
+        # Get user from DB
+        user = db.query(User).filter(User.full_name == name).first()
+        if not user:
+            continue  # or create user if needed
+
+        # Create attendance record
+        attendance = Attendance(
+            user_id=user.id,
+            date=join_time.date(),
+            join_time=join_time.time(),
+            leave_time=leave_time.time(),
+            duration_minutes=duration
+        )
+        db.add(attendance)
+
+    db.commit()
+    return {"message": "Attendance data processed successfully"}
+
+
+
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+import google.generativeai as genai
+import os, json
+# from models import get_db, User  # adjust as needed
+
+# router = APIRouter()
+
+@app.get("/consultants/{user_id}/training-recommendations", tags=["Training"])
+def get_training_recommendations(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user or not user.skills:
+        raise HTTPException(status_code=404, detail="Consultant or skills not found")
+
+    # skills_list = json.dumps(user.skills)  # Assuming user.skills is already in list of dicts format
+
+    skills_list = json.dumps([
+        {"name": skill.skill, "proficiency": skill.proficiency}
+        for skill in user.skills
+    ])
+
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+    model = genai.GenerativeModel("gemini-2.0-flash")
+
+    prompt = f"""
+        You are a training recommendation engine.
+
+        Here is a list of skills with proficiency (1–10) of a software consultant:
+        {skills_list}
+
+        Your task:
+        - Recommend one or more online training courses (Coursera, Udemy) for skill where proficiency is below 5.
+        - recommend the courses which is the advanced version of existing skills, if skill is java, you should recommend advanced topics in java like springboot and etc..
+        - do this for all other skills and you should also provide the link for that course, mostly use famous courses from udemy and coursera 
+        - For each course, return:
+        - skill name
+        - course title
+        - platform
+        - link (URL is must and only valid URL)
+        - reason why it's recommended
+
+        Return only a JSON list like this:
+
+        [
+        {{
+            "skill": "Python",
+            "course_title": "Python for Everybody",
+            "platform": "Coursera",
+            "link": "https://www.coursera.org/specializations/python",
+            "reason": "Great for beginners to strengthen Python fundamentals."
+        }},
+        ...
+        ]
+
+        Only return JSON. No extra text.
+        """
+
+
+    try:
+        response = model.generate_content(prompt)
+        import re
+        raw_text = re.sub(r"^```(?:json)?\s*|\s*```$", "", response.text.strip())
+        recommendations = json.loads(raw_text)
+        return {"user_id": user_id, "recommendations": recommendations}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating recommendations: {str(e)}")
+
+from fastapi import APIRouter, UploadFile, File, HTTPException
+from sqlalchemy.orm import Session
+import fitz  # PyMuPDF
+import os
+import google.generativeai as genai
+import json
+from app.model.models import CompletedTraining  # Adjust the path as needed
+
+
+
+# router = APIRouter()
+
+@app.post("/consultants/{consultant_id}/upload-certificate")
+async def upload_certificate(
+    consultant_id: int,
+    certificate: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    print("Received file:", certificate.filename)
+    # Step 1: Extract text from certificate using PyMuPDF
+    try:
+        
+
+        file_bytes = certificate.file.read()
+        with fitz.open(stream=file_bytes, filetype="pdf") as doc:
+            full_text = "\n".join([page.get_text() for page in doc])
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error reading PDF: {str(e)}")
+
+    # Step 2: Prompt Gemini to extract training info
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+    model = genai.GenerativeModel("gemini-2.0-flash")
+
+    prompt = f"""
+You are an AI assistant for parsing training certificates.
+
+Given the certificate content below, extract the following information in pure JSON (no extra text, no markdown):
+
+Format:
+{{
+  "title": "<course title>",
+  "provider": "<training provider (it should be company name who offered the course, not canditate name)>",
+  "completedDate": "<date in DD MMM YYYY or MM/YYYY format>"
+  
+}}
+
+Only return valid JSON.
+
+Certificate Text:
+\"\"\"
+{full_text}
+\"\"\"
+"""
+
+    try:
+        response = model.generate_content(prompt)
+        json_text = response.text.strip()
+
+        # Remove markdown wrapping if present
+        import re
+        cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", json_text.strip(), flags=re.IGNORECASE)
+
+        parsed = json.loads(cleaned)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gemini error: {str(e)}")
+    if not parsed["title"] or not parsed["provider"] or not parsed["completedDate"]:
+        raise HTTPException(status_code=400, detail="Certificate parsing failed.")
+
+
+    # Step 3: Save to database (optional)
+    training = CompletedTraining(
+        consultant_id=consultant_id,
+        title=parsed["title"],
+        provider=parsed["provider"],
+        completed_date=parsed["completedDate"]
+    )
+    
+    db.add(training)
+    db.commit()
+
+    # Step 4: Return parsed data
+    return {
+        "consultant_id": consultant_id,
+        "training": parsed
+    }
+
+
+@app.get("/consultants/{consultant_id}/completed-trainings")
+def get_completed_trainings(consultant_id: int, db: Session = Depends(get_db)):
+    trainings = db.query(CompletedTraining).filter(CompletedTraining.consultant_id == consultant_id).all()
+    return [
+        {
+            "title": t.title,
+            "provider": t.provider,
+            "completedDate": t.completed_date
+        } for t in trainings
+    ]
+
+
+

@@ -1,72 +1,14 @@
-# from fastapi import APIRouter, Depends, HTTPException, status
-# from sqlalchemy.orm import Session
-# from app.model.user_model import User
-# from app.database import get_db
-# from passlib.context import CryptContext
-# from pydantic import BaseModel, EmailStr
-# from jose import jwt
-# import os
-# from datetime import datetime, timedelta
 
-# router = APIRouter()
-
-# # Password hashing
-# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# # JWT settings
-# SECRET_KEY = "your_secret_key"  # Replace with a secure secret
-# ALGORITHM = "HS256"
-# ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-# # Request schemas
-# class RegisterUser(BaseModel):
-#     name: str
-#     email: EmailStr
-#     password: str
-#     role: str  # 'admin' or 'consultant'
-
-# class LoginUser(BaseModel):
-#     email: EmailStr
-#     password: str
-
-# # Register endpoint
-# @router.post("/register")
-# def register(user: RegisterUser, db: Session = Depends(get_db)):
-#     existing_user = db.query(User).filter(User.email == user.email).first()
-#     if existing_user:
-#         raise HTTPException(status_code=400, detail="Email already registered")
-
-#     hashed_password = pwd_context.hash(user.password)
-#     new_user = User(
-#         name=user.name,
-#         email=user.email,
-#         hashed_password=hashed_password,
-#         role=user.role
-#     )
-#     db.add(new_user)
-#     db.commit()
-#     db.refresh(new_user)
-#     return {"message": "User registered successfully"}
-
-# # Login endpoint
-# @router.post("/login")
-# def login(user: LoginUser, db: Session = Depends(get_db)):
-#     db_user = db.query(User).filter(User.email == user.email).first()
-#     if not db_user or not pwd_context.verify(user.password, db_user.hashed_password):
-#         raise HTTPException(status_code=401, detail="Invalid email or password")
-
-#     # JWT creation
-#     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-#     token_data = {
-#         "sub": db_user.email,
-#         "role": db_user.role,
-#         "exp": expire
-#     }
-#     access_token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
-
-#     return {"access_token": access_token, "token_type": "bearer", "role": db_user.role}
-
-
+from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # In development, "*" is okay. For production, restrict to ["http://localhost:5173"] or your domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # app/routers/user_router.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -77,6 +19,7 @@ from pydantic import BaseModel
 from typing import Optional
 import os
 from dotenv import load_dotenv
+from app.model.models import Skill
 
 # Local imports
 from app.model.user_model import User
@@ -94,6 +37,11 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+import bcrypt
+
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
 
 class LoginForm(BaseModel):
     email: str
@@ -114,7 +62,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 @router.post("/register", response_model=UserResponse)
 async def register(user: UserCreate, db: Session = Depends(get_db)):
     """Register a new user"""
+    print("📥 Received user registration data:", user.dict())
     # Check if email exists
+    hashed_password = hash_password(user.password)
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
         raise HTTPException(
@@ -122,19 +72,30 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
             detail="Email already registered"
         )
     
-    # Create user
+    skill_objects = []
+    for skill_name in user.skills or []:
+        skill = db.query(Skill).filter(Skill.skill == skill_name).first()
+        if not skill:
+            # Create if skill doesn't exist
+            skill = Skill(skill=skill_name)
+            db.add(skill)
+            db.commit()
+            db.refresh(skill)
+        skill_objects.append(skill)
+
     new_user = User(
         name=user.name,
         email=user.email,
+        hashed_password=hashed_password,
         role=user.role,
         department=user.department,
-        skills=user.skills
+        skills=skill_objects  # ✅ now this is list[Skill]
     )
-    new_user.set_password(user.password)
-    
+
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+
     return new_user
 
 @router.post("/login", response_model=Token)
