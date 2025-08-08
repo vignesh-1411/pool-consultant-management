@@ -7,6 +7,7 @@ import {
   FileText, 
   Calendar, 
   Target, 
+  X,
   GraduationCap, 
   CheckCircle, 
   Clock, 
@@ -44,9 +45,38 @@ interface TrainingRecommendation {
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-
+  interface Opportunity {
+  id: number;
+  title: string;
+  client: string;
+  description: string;
+  }
 
 const ConsultantDashboard: React.FC = () => {
+
+  const [showOpportunitiesModal, setShowOpportunitiesModal] = useState(false);
+
+  const opportunities: Opportunity[] = [
+    {
+      id: 1,
+      title: 'Frontend Developer for E-commerce',
+      client: 'Retail Innovators Inc.',
+      description: 'We are looking for a skilled Frontend Developer with expertise in React and Tailwind CSS to build our next-generation e-commerce platform. This role involves developing responsive user interfaces and optimizing performance.',
+    },
+    {
+      id: 2,
+      title: 'Data Analyst for Marketing Team',
+      client: 'Data Driven Solutions',
+      description: 'A Data Analyst is needed to help our marketing team make sense of campaign data. You will be responsible for creating dashboards, running reports, and providing actionable insights to improve our ROI.',
+    },
+    {
+      id: 3,
+      title: 'Fullstack Engineer for Fintech Project',
+      client: 'Fintech Nexus',
+      description: 'Seeking a Fullstack Engineer proficient in Python (FastAPI) and TypeScript to work on a secure financial application. The role includes both backend API development and frontend integration.',
+    },
+  ];
+
   
 
   const [stats, setStats] = useState<DashboardStats>({
@@ -260,6 +290,7 @@ const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement
   } catch (error) {
     console.error("Error fetching user name:", error);
   }
+
   
 
 };
@@ -319,6 +350,38 @@ const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement
 
               </div>
             </div>
+            {/* Opportunities Modal */}
+            {showOpportunitiesModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+                  {/* Modal Header */}
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900">Available Opportunities</h2>
+                    <button onClick={() => setShowOpportunitiesModal(false)} className="text-gray-500 hover:text-gray-800">
+                      <X size={24} />
+                    </button>
+                  </div>
+
+                  {/* Opportunities List */}
+                  <div className="space-y-6">
+                    {opportunities.map((opportunity) => (
+                      <div key={opportunity.id} className="border-b pb-4 last:border-b-0">
+                        <div className="flex justify-between items-center mb-2">
+                          <h3 className="text-xl font-semibold text-gray-800">{opportunity.title}</h3>
+                          <span className="text-sm font-medium text-gray-500">{opportunity.client}</span>
+                        </div>
+                        <p className="text-gray-600 mb-4">{opportunity.description}</p>
+                        <div className="flex justify-end">
+                          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            Submit/Document
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
             {showSkillsModal && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
                 <div className="bg-white p-8 rounded-2xl shadow-2xl w-96 max-w-md mx-4 transform transition-all duration-300">
@@ -422,7 +485,33 @@ const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement
           </div>
 
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="flex items-center justify-between mb-4">
+
+             <button 
+                onClick={() => setShowOpportunitiesModal(true)} 
+                className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-left"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <Target className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900">Opportunities</h3>
+                      <p className="text-sm text-gray-500">During bench period</p>
+                    </div>
+                  </div>
+                  {getStatusIcon(stats.opportunitiesCount > 0 ? 'completed' : 'pending')}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                    {stats.opportunitiesCount}
+                  </span>
+                  <span className="text-sm font-medium text-gray-600 bg-gradient-to-r from-gray-100 to-slate-100 px-3 py-1.5 rounded-lg border border-gray-200">
+                    not started
+                  </span>
+                </div>
+              </button>
+            {/* <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
                 <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
                   <Target className="h-6 w-6 text-white" />
@@ -439,9 +528,9 @@ const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement
                 {stats.opportunitiesCount}
               </span>
               <span className="text-sm font-medium text-gray-600 bg-gradient-to-r from-gray-100 to-slate-100 px-3 py-1.5 rounded-lg border border-gray-200">
-                documented
+                not started
               </span>
-            </div>
+            </div> */}
           </div>
 
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
