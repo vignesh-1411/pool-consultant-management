@@ -59,6 +59,8 @@ interface TrainingCourse {
   category: string;
   enrolledCount: number;
 }
+const API_URL = import.meta.env.VITE_API_URL;
+
 
 const AdminDashboard: React.FC = () => {
   const [consultants, setConsultants] = useState<Consultant[]>([]);
@@ -74,7 +76,7 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const fetchConsultants = async () => {
       try {
-        const response = await fetch('http://localhost:8000/admin/consultants', {
+        const response = await fetch(`${API_URL}/admin/consultants`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -199,7 +201,7 @@ const AdminDashboard: React.FC = () => {
   const downloadConsultantReport = async (consultantId: string, consultantName: string) => {
     try {
       const response = await fetch(
-        `http://localhost:8000/consultants/${consultantId}/report`,
+        `${API_URL}/consultants/${consultantId}/report`,
         {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`

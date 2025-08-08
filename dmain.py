@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # In development, "*" is okay. For production, restrict to ["http://localhost:5173"] or your domain
+    allow_origins=["https://pool-consultant-management.vercel.app"],  # In development, "*" is okay. For production, restrict to ["http://localhost:5173"] or your domain
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -7,6 +7,8 @@ import { loginUser } from '../services/authService';
 import type { LoginFormData } from '../types';
 import axios from 'axios'; // Register call will use this
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 function LoginPage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<LoginFormData>({

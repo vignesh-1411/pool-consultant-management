@@ -42,6 +42,7 @@ interface TrainingRecommendation {
   reason: string;
 }
 
+const API_URL = import.meta.env.VITE_API_URL;
 
 
 
@@ -77,7 +78,7 @@ useEffect(() => {
 
     try {
       const response = await axios.get(
-        `http://localhost:8000/consultants/${userId}/completed-trainings`
+        `${API_URL}/consultants/${userId}/completed-trainings`
       );
 
       // Ensure it's an array before setting
@@ -101,7 +102,7 @@ useEffect(() => {
   
   
   const userId = localStorage.getItem("user_id");
-  const resumeUrl = `http://localhost:8000/consultants/${userId}/resume`;
+  const resumeUrl = `${API_URL}/consultants/${userId}/resume`;
 
  
   useEffect(() => {
@@ -128,7 +129,7 @@ useEffect(() => {
 
 const fetchSkills = async () => {
   try {
-    const res = await fetch(`http://localhost:8000/consultant/${userId}/skills`);
+    const res = await fetch(`${API_URL}/consultant/${userId}/skills`);
     const data = await res.json();
 
     const skillNames = data.map((item: { skill: string }) => item.skill);
@@ -150,7 +151,7 @@ const fetchSkills = async () => {
 
   const fetchDashboardData = async () => {
   try {
-    const res = await fetch(`http://localhost:8000/consultants/${userId}/dashboard`);
+    const res = await fetch(`${API_URL}/consultants/${userId}/dashboard`);
     const data = await res.json();
 
     setStats(prev => ({
@@ -177,7 +178,7 @@ const fetchSkills = async () => {
   if (!userId) return;
 
   try {
-    const response = await axios.get(`http://localhost:8000/consultants/${userId}/training-recommendations`);
+    const response = await axios.get(`${API_URL}/consultants/${userId}/training-recommendations`);
     setRecommendations(response.data.recommendations); // assuming the response is { "recommendations": [ "Course A", "Course B", ... ] }
   } catch (error) {
     console.error("Failed to fetch training recommendations:", error);
@@ -191,7 +192,7 @@ const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement
   formData.append("certificate", file);
 
   try {
-    const response = await fetch(`http://localhost:8000/consultants/${userId}/upload-certificate`, {
+    const response = await fetch(`${API_URL}/consultants/${userId}/upload-certificate`, {
       method: "POST",
       body: formData,
     });
@@ -250,7 +251,7 @@ const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement
 
   const fetchUserName = async () => {
   try {
-    const res = await fetch(`http://127.0.0.1:8000/admin/consultant/${userId}`);
+    const res = await fetch(`${API_URL}/admin/consultant/${userId}`);
     const data = await res.json();
 
     // Access name from profile
@@ -385,7 +386,7 @@ const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement
                 <button
                   onClick={() => {
                     if (!userId) return;
-                    window.open(`http://localhost:8000/consultants/${userId}/resume`, "_blank");
+                    window.open(`${API_URL}/consultants/${userId}/resume`, "_blank");
                   }}
                   className="text-green-600 hover:text-green-700 text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-green-50 transition-all duration-200"
                 >

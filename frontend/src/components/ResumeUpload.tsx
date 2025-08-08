@@ -8,6 +8,8 @@ interface Props {
   onClose: () => void;
   onUploaded?: () => void;
 }
+const API_URL = import.meta.env.VITE_API_URL;
+
 
 const ResumeUpload: React.FC<Props> = ({ onClose, onUploaded }) => {
   const [file, setFile] = useState<File | null>(null);
@@ -30,10 +32,10 @@ const ResumeUpload: React.FC<Props> = ({ onClose, onUploaded }) => {
 
     try {
       // Step 1: Upload file
-      await axios.post(`http://localhost:8000/upload-file?user_id=${userId}`, uploadFormData);
+      await axios.post(`${API_URL}/upload-file?user_id=${userId}`, uploadFormData);
 
       // Step 2: Process resume with Gemini AI
-      await axios.post(`http://localhost:8000/process-resume-ai?user_id=${userId}`, processFormData);
+      await axios.post(`${API_URL}/process-resume-ai?user_id=${userId}`, processFormData);
 
       alert("Resume uploaded and skills updated successfully.");
 
