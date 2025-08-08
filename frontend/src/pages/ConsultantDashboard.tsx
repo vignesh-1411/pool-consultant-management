@@ -1,5 +1,5 @@
 // // src/pages/ConsultantDashboard.tsx
-
+import ChatBot from '../components/ChatBot';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -230,7 +230,7 @@ const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement
     { name: 'Resume Updated', completed: stats.resumeStatus === 'updated' },
     { name: 'Attendance Reported', completed: stats.attendanceRate > 80 },
     { name: 'Opportunities Documented', completed: stats.opportunitiesCount > 0 },
-    { name: 'Training Completed', completed: stats.trainingProgress === 'completed' }
+    { name: 'Training Completed', completed: stats.trainingProgress === 'in_progress' }
   ];
 
   const getPriorityColor = (priority: string) => {
@@ -634,7 +634,7 @@ const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement
               <div className="flex items-start space-x-4">
                 <div className="w-3 h-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full mt-2 shadow-sm"></div>
                 <p className="text-gray-700 leading-relaxed">
-                  Your attendance rate is excellent! Keep maintaining this consistency for better project allocation opportunities.
+                  Your attendance rate is very low! Keep attending all meetings for better project allocation opportunities.
                 </p>
               </div>
             </div>
@@ -646,6 +646,10 @@ const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement
                 </p>
               </div>
             </div>
+          </div>
+          {/* ChatBot */}
+          <div className="fixed bottom-4 right-4 z-50">
+            <ChatBot />
           </div>
         </div>
 

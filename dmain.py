@@ -571,7 +571,7 @@ def get_consultant_dashboard_data(db: Session, user_id: int):
     opportunities_count = 2
 
     # Training status
-    training_status = "completed"
+    training_status = "not_started"
 
     # Workflow progress (example logic)
     workflow_progress = 70 if training_status == "in_progress" else 100 if training_status == "completed" else 20
@@ -669,6 +669,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 import google.generativeai as genai
 import os, json
+from metrics import log_request, get_metrics
+import time
 # from models import get_db, User  # adjust as needed
 
 # router = APIRouter()
@@ -832,3 +834,57 @@ def get_completed_trainings(consultant_id: int, db: Session = Depends(get_db)):
 
 
 
+import os
+import google.generativeai as genai
+from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel
+from typing import Optional
+
+# Configuration
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    # It's crucial to handle this error at startup
+    raise ValueError("GEMINI_API_KEY environment variable is not set. Please set it to your API key.")
+genai.configure(api_key=GEMINI_API_KEY)
+
+# router = APIRouter()
+model = genai.GenerativeModel('gemini-2.0-flash')
+
+class ChatRequest(BaseModel):
+    message: str
+
+class ChatResponse(BaseModel):
+    response: str
+    
+# In-memory storage for conversation history, keyed by a user identifier
+# This is a simple approach for demonstration. A real-world app would use a database.
+# For this example, we'll maintain a single, global conversation.
+conversation = model.start_chat(history=[])
+
+@app.post("/chat", response_model=ChatResponse)
+async def chat_with_gemini(request: ChatRequest):
+    """
+    Sends a user message to the Gemini Pro model and returns the response.
+    """
+    if not request.message.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Message cannot be empty."
+        )
+        
+    try:
+        # Send the user's message to the conversation model
+        response = conversation.send_message(request.message)
+        
+        # Extract the text from the response object
+        gemini_text = response.text
+        
+        return ChatResponse(response=gemini_text)
+    
+    except Exception as e:
+        # Log the full exception for debugging
+        print(f"Gemini API error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while communicating with the chatbot."
+        )

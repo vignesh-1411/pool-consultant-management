@@ -9,12 +9,14 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import ConsultantDashboard from './pages/ConsultantDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import RegisterPage from './pages/RegisterPage';
+import LandingPage from './pages/LandingPage';
 
 const AppRouter: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/" element={<Navigate to="/landing" />} />
+        <Route path="/landing" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 

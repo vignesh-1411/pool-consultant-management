@@ -1,4 +1,4 @@
-
+import ChatBot from '../components/ChatBot';
 import React, { useState, useEffect } from 'react';
 import { 
   Search, 
@@ -639,10 +639,10 @@ const AdminDashboard: React.FC = () => {
               <div>
                 <p className="text-sm font-semibold text-gray-600 mb-1">Total Consultants</p>
                 <p className="text-3xl font-bold text-gray-900">{consultants.length}</p>
-                <div className="flex items-center mt-2">
+                {/* <div className="flex items-center mt-2">
                   <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
                   <span className="text-sm text-green-600 font-medium">+12% this month</span>
-                </div>
+                </div> */}
               </div>
               <div className="h-14 w-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
                 <Users className="h-7 w-7 text-white" />
@@ -739,6 +739,10 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
+{/* ChatBot */}
+          <div className="fixed bottom-4 right-4 z-50">
+            <ChatBot />
+          </div>
         {/* Enhanced Agent Framework Status */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
           <div className="flex items-center space-x-4 mb-8">
@@ -754,17 +758,17 @@ const AdminDashboard: React.FC = () => {
             <div className="text-center p-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200">
               <div className="text-3xl font-bold text-green-600 mb-2">98.5%</div>
               <div className="text-sm font-semibold text-gray-700 mb-1">Resume Agent Uptime</div>
-              <div className="text-xs text-green-600">Excellent performance</div>
+              {/* <div className="text-xs text-green-600">Excellent performance</div> */}
             </div>
             <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
               <div className="text-3xl font-bold text-blue-600 mb-2">45ms</div>
               <div className="text-sm font-semibold text-gray-700 mb-1">Avg Response Time</div>
-              <div className="text-xs text-blue-600">Lightning fast</div>
+              {/* <div className="text-xs text-blue-600">Lightning fast</div> */}
             </div>
             <div className="text-center p-6 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-200">
-              <div className="text-3xl font-bold text-purple-600 mb-2">12</div>
+              <div className="text-3xl font-bold text-purple-600 mb-2">0</div>
               <div className="text-sm font-semibold text-gray-700 mb-1">Active Queues</div>
-              <div className="text-xs text-purple-600">Processing smoothly</div>
+              {/* <div className="text-xs text-purple-600">Processing smoothly</div> */}
             </div>
             <div className="text-center p-6 bg-gradient-to-br from-red-50 to-rose-50 rounded-xl border border-red-200">
               <div className="text-3xl font-bold text-red-600 mb-2">0.2%</div>
