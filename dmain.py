@@ -16,11 +16,20 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://pool-consultant-management.vercel.app"],  # In development, "*" is okay. For production, restrict to ["http://localhost:5173"] or your domain
+    # allow_origins=["https://pool-consultant-management.vercel.app"],  # In development, "*" is okay. For production, restrict to ["http://localhost:5173"] or your domain
+
+    allow_origins=[
+        "https://pool-consultant-management.vercel.app",  # Your Vercel domain
+        "https://*.vercel.app"  # Optional, for preview deployments
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+from app.routers import user_router
+
+app.include_router(user_router.router, prefix="/auth")
 # allow_origins=["http://localhost:5173"]
 # app.include_router(auth_router, prefix="/auth")
 
@@ -40,9 +49,7 @@ import google.generativeai as genai
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 
-from app.routers import user_router
 
-app.include_router(user_router.router, prefix="/auth")
 
 
 
