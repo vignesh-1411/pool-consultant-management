@@ -64,12 +64,6 @@ const ConsultantDashboard: React.FC = () => {
       description: 'We are looking for a skilled Frontend Developer with expertise in React and Tailwind CSS to build our next-generation e-commerce platform. This role involves developing responsive user interfaces and optimizing performance.',
     },
     {
-      id: 2,
-      title: 'Data Analyst for Marketing Team',
-      client: 'Data Driven Solutions',
-      description: 'A Data Analyst is needed to help our marketing team make sense of campaign data. You will be responsible for creating dashboards, running reports, and providing actionable insights to improve our ROI.',
-    },
-    {
       id: 3,
       title: 'Fullstack Engineer for Fintech Project',
       client: 'Fintech Nexus',
@@ -356,7 +350,7 @@ const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
                 {/* <div className="bg-white rounded-lg shadow-xl p-8 w-[1900px] h-[200px] overflow-y-auto"> */}
                 <div className="bg-white p-8 rounded-2xl shadow-2xl 
-                  w-[80vw] max-w-4xl h-[60vh] 
+                  w-[100vw] max-w-4xl h-[60vh] 
                   overflow-y-auto 
                   transform transition-all duration-300">
                   {/* Modal Header */}
