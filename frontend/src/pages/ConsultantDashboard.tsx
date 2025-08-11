@@ -383,43 +383,37 @@ const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement
               </div>
             )}
             {/* Opportunities Modal */}
-            {showOpportunitiesModal && (
-              // <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
-                {/* <div className="bg-white rounded-lg shadow-xl p-8 w-[1900px] h-[200px] overflow-y-auto"> */}
-                <div className="bg-white p-8 rounded-2xl shadow-2xl 
-                    w-[80vw] aspect-[16/9] 
-                    max-w-[90vw] max-h-[90vh] 
-                    overflow-y-auto 
-                    transform transition-all duration-300">
-                  {/* Modal Header */}
-                  <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">Available Opportunities</h2>
-                    <button onClick={() => setShowOpportunitiesModal(false)} className="text-gray-500 hover:text-gray-800">
-                      <X size={24} />
-                    </button>
-                  </div>
+{showOpportunitiesModal && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
+      <div className="bg-white p-8 rounded-2xl shadow-2xl relative w-[90vw] max-w-[960px] aspect-[16/9] overflow-y-auto transform transition-all duration-300">
+        {/* Modal Header */}
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Available Opportunities</h2>
+          <button onClick={() => setShowOpportunitiesModal(false)} className="text-gray-500 hover:text-gray-800">
+            <X size={24} />
+          </button>
+        </div>
 
-                  {/* Opportunities List */}
-                  <div className="space-y-6">
-                    {opportunities.map((opportunity) => (
-                      <div key={opportunity.id} className="border-b pb-4 last:border-b-0">
-                        <div className="flex justify-between items-center mb-2">
-                          <h3 className="text-xl font-semibold text-gray-800">{opportunity.title}</h3>
-                          <span className="text-sm font-medium text-gray-500">{opportunity.client}</span>
-                        </div>
-                        <p className="text-gray-600 mb-4">{opportunity.description}</p>
-                        <div className="flex justify-end">
-                          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                            Submit/Document
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
+        {/* Opportunities List */}
+        <div className="space-y-6">
+          {opportunities.map((opportunity) => (
+            <div key={opportunity.id} className="border-b pb-4 last:border-b-0">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-xl font-semibold text-gray-800">{opportunity.title}</h3>
+                <span className="text-sm font-medium text-gray-500">{opportunity.client}</span>
+              </div>
+              <p className="text-gray-600 mb-4">{opportunity.description}</p>
+              <div className="flex justify-end">
+                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                  Submit/Document
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+)}
 
 
 
