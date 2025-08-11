@@ -388,10 +388,10 @@ const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
                 {/* <div className="bg-white rounded-lg shadow-xl p-8 w-[1900px] h-[200px] overflow-y-auto"> */}
                 <div className="bg-white p-8 rounded-2xl shadow-2xl 
-                  w-[80vh] max-w-[90vw] 
-                  h-[45vh] max-h-[90vh] 
-                  overflow-y-auto 
-                  transform transition-all duration-300">
+                    w-[80vw] aspect-[16/9] 
+                    max-w-[90vw] max-h-[90vh] 
+                    overflow-y-auto 
+                    transform transition-all duration-300">
                   {/* Modal Header */}
                   <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold text-gray-900">Available Opportunities</h2>
@@ -515,26 +515,6 @@ const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement
                   </span>
                 </div>
               </button>
-            {/* <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <Target className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900">Opportunities</h3>
-                  <p className="text-sm text-gray-500">During bench period</p>
-                </div>
-              </div>
-              {getStatusIcon(stats.opportunitiesCount > 0 ? 'completed' : 'pending')}
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                {stats.opportunitiesCount}
-              </span>
-              <span className="text-sm font-medium text-gray-600 bg-gradient-to-r from-gray-100 to-slate-100 px-3 py-1.5 rounded-lg border border-gray-200">
-                not started
-              </span>
-            </div> */}
           </div>
 
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
