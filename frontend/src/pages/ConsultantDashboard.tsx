@@ -1,4 +1,3 @@
-// // src/pages/ConsultantDashboard.tsx
 import ChatBot from '../components/ChatBot';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -382,40 +381,93 @@ const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement
                 </div>
               </div>
             )}
-            {/* Opportunities Modal */}
+            
+            {/* Enhanced Opportunities Modal */}
             {showOpportunitiesModal && (
-              // <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
-                {/* <div className="bg-white rounded-lg shadow-xl p-8 w-[1900px] h-[200px] overflow-y-auto"> */}
-                <div className="bg-white p-8 rounded-2xl shadow-2xl 
-                  w-[80vh] max-w-[90vw] 
-                  h-[45vh] max-h-[90vh] 
+              <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-md">
+                <div className="bg-white p-8 rounded-3xl shadow-2xl 
+                  w-[90vw] max-w-5xl 
+                  max-h-[85vh] 
                   overflow-y-auto 
-                  transform transition-all duration-300">
-                  {/* Modal Header */}
-                  <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">Available Opportunities</h2>
-                    <button onClick={() => setShowOpportunitiesModal(false)} className="text-gray-500 hover:text-gray-800">
-                      <X size={24} />
+                  transform transition-all duration-500 scale-100
+                  border-2 border-purple-100">
+                  
+                  {/* Enhanced Modal Header */}
+                  <div className="flex justify-between items-center mb-8 pb-6 border-b-2 border-gray-100">
+                    <div className="flex items-center space-x-4">
+                      <div className="h-14 w-14 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl">
+                        <Target className="h-7 w-7 text-white" />
+                      </div>
+                      <div>
+                        <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                          Available Opportunities
+                        </h2>
+                        <p className="text-gray-600 mt-1 text-lg">Explore exciting career opportunities during your bench period</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setShowOpportunitiesModal(false)} 
+                      className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 p-3 rounded-full transition-all duration-200 transform hover:scale-110"
+                    >
+                      <X size={28} />
                     </button>
                   </div>
 
-                  {/* Opportunities List */}
+                  {/* Enhanced Opportunities List */}
                   <div className="space-y-6">
                     {opportunities.map((opportunity) => (
-                      <div key={opportunity.id} className="border-b pb-4 last:border-b-0">
-                        <div className="flex justify-between items-center mb-2">
-                          <h3 className="text-xl font-semibold text-gray-800">{opportunity.title}</h3>
-                          <span className="text-sm font-medium text-gray-500">{opportunity.client}</span>
+                      <div key={opportunity.id} 
+                        className="bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 
+                          border-2 border-purple-200 rounded-2xl p-8 
+                          hover:shadow-xl hover:border-purple-300 
+                          transition-all duration-300 transform hover:-translate-y-1">
+                        
+                        <div className="flex justify-between items-start mb-6">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-3">
+                              <div className="h-3 w-3 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full shadow-sm"></div>
+                              <h3 className="text-2xl font-bold text-gray-900">{opportunity.title}</h3>
+                            </div>
+                            <div className="flex items-center space-x-2 mb-4">
+                              <span className="text-lg font-semibold text-purple-600 bg-purple-100 px-4 py-2 rounded-xl border border-purple-200">
+                                {opportunity.client}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-gray-600 mb-4">{opportunity.description}</p>
-                        <div className="flex justify-end">
-                          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                            Submit/Document
+                        
+                        <div className="bg-white rounded-xl p-6 mb-6 border border-gray-200 shadow-sm">
+                          <h4 className="font-semibold text-gray-800 mb-3 text-lg">Job Description:</h4>
+                          <p className="text-gray-700 leading-relaxed text-base">{opportunity.description}</p>
+                        </div>
+                        
+                        <div className="flex justify-end space-x-4">
+                          <button className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-4 rounded-xl 
+                            hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 
+                            font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5
+                            flex items-center space-x-2">
+                            <Target className="h-5 w-5" />
+                            <span>Submit Application</span>
+                          </button>
+                          <button className="bg-white text-purple-600 px-8 py-4 rounded-xl border-2 border-purple-200
+                            hover:bg-purple-50 hover:border-purple-300 transition-all duration-200 
+                            font-semibold text-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5
+                            flex items-center space-x-2">
+                            <FileText className="h-5 w-5" />
+                            <span>Save for Later</span>
                           </button>
                         </div>
                       </div>
                     ))}
+                  </div>
+
+                  {/* Enhanced Modal Footer */}
+                  <div className="mt-8 pt-6 border-t-2 border-gray-100">
+                    <div className="flex justify-center">
+                      <p className="text-gray-500 text-lg">
+                        Need more opportunities? Contact your project manager for additional assignments.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -488,31 +540,31 @@ const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
              <button 
                 onClick={() => setShowOpportunitiesModal(true)} 
-                className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 text-left"
+                className="w-full h-full p-6 text-left bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl hover:border-purple-300 hover:shadow-2xl hover:from-purple-100 hover:to-indigo-100 transition-all duration-300 transform hover:scale-105 group"
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
                       <Target className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900">Opportunities</h3>
-                      <p className="text-sm text-gray-500">During bench period</p>
+                      <h3 className="font-bold text-gray-900 text-lg group-hover:text-purple-800 transition-colors">Opportunities</h3>
+                      <p className="text-sm text-gray-600 group-hover:text-purple-600">Click to explore openings</p>
                     </div>
                   </div>
                   {getStatusIcon(stats.opportunitiesCount > 0 ? 'completed' : 'pending')}
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                  <span className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent group-hover:from-purple-700 group-hover:to-indigo-700">
                     {stats.opportunitiesCount}
                   </span>
-                  <span className="text-sm font-medium text-gray-600 bg-gradient-to-r from-gray-100 to-slate-100 px-3 py-1.5 rounded-lg border border-gray-200">
-                    not started
-                  </span>
+                  <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-xl shadow-sm border border-purple-100 group-hover:border-purple-200 transition-all">
+                    <span className="text-sm font-semibold text-purple-600">View All</span>
+                    <Target className="h-4 w-4 text-purple-500 group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </div>
               </button>
           </div>
