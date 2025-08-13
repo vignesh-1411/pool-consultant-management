@@ -540,6 +540,9 @@ const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement
             </div>
           </div>
 
+
+          
+          {/* opportunities model */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
              <button 
                 onClick={() => setShowOpportunitiesModal(true)} 

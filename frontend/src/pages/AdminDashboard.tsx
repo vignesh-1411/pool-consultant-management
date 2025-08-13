@@ -147,7 +147,7 @@ const AdminDashboard: React.FC = () => {
       provider: 'Udemy',
       duration: '40 hours',
       category: 'Frontend',
-      enrolledCount: 12
+      enrolledCount: 4
     },
     {
       id: '2',
@@ -155,7 +155,7 @@ const AdminDashboard: React.FC = () => {
       provider: 'Udemy',
       duration: '65 hours',
       category: 'Cloud',
-      enrolledCount: 8
+      enrolledCount: 2
     }
   ];
 
@@ -496,9 +496,9 @@ const AdminDashboard: React.FC = () => {
                   </td>
                   <td className="px-6 py-6 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-3">
-                      <button className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all duration-200 group-hover:shadow-md">
+                      {/* <button className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all duration-200 group-hover:shadow-md">
                         <Target className="h-4 w-4" />
-                      </button>
+                      </button> */}
                       <button 
                         onClick={() => handleNotifyConsultant('consultant@example.com', opportunity.title)}
                         className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-all duration-200 group-hover:shadow-md"
@@ -599,9 +599,9 @@ const AdminDashboard: React.FC = () => {
                   </td>
                   <td className="px-6 py-6 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-3">
-                      <button className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all duration-200 group-hover:shadow-md">
+                      {/* <button className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all duration-200 group-hover:shadow-md">
                         <Eye className="h-4 w-4" />
-                      </button>
+                      </button> */}
                       <button className="p-2 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-all duration-200 group-hover:shadow-md">
                         <ExternalLink className="h-4 w-4" />
                       </button>
